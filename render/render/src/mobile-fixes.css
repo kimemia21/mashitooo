@@ -1,0 +1,122 @@
+/* Mobile responsiveness fixes for T-shirt editor */
+
+/* Ensure proper scrolling on mobile devices */
+body {
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Fix viewport on mobile */
+@viewport {
+  width: device-width;
+  zoom: 1.0;
+}
+
+/* Mobile-specific fixes */
+@media (max-width: 768px) {
+  /* Prevent zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+  
+  /* Ensure touch targets are large enough */
+  button, [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Fix canvas touch behavior */
+  canvas {
+    touch-action: none;
+  }
+  
+  /* Prevent text selection during drag */
+  .sticker-editor * {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  
+  /* Ensure proper scrolling in containers */
+  .editor-container {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
+  
+  /* Fix for iOS Safari viewport height issues */
+  .full-height {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
+  /* Prevent bounce scrolling where not needed */
+  .no-bounce {
+    overscroll-behavior: none;
+  }
+  
+  /* Ensure resize handles are touch-friendly */
+  .resize-handle {
+    min-width: 24px !important;
+    min-height: 24px !important;
+  }
+  
+  /* Fix for small screens */
+  @media (max-width: 375px) {
+    .sticker-editor {
+      padding: 8px !important;
+    }
+    
+    .t-shirt-template {
+      max-width: calc(100vw - 16px) !important;
+    }
+  }
+  
+  /* Landscape orientation fixes */
+  @media (orientation: landscape) {
+    .mobile-layout {
+      flex-direction: row !important;
+    }
+    
+    .side-panel-mobile {
+      width: 40vw !important;
+      height: 100vh !important;
+    }
+    
+    .canvas-mobile {
+      width: 60vw !important;
+      height: 100vh !important;
+    }
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .sticker-editor {
+    border: 2px solid !important;
+  }
+  
+  .resize-handle, .delete-button {
+    border: 3px solid !important;
+  }
+}
+
+/* Dark mode considerations */
+@media (prefers-color-scheme: dark) {
+  .fabric-texture {
+    filter: brightness(0.9);
+  }
+}
