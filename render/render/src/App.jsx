@@ -1,12 +1,12 @@
 import React, { useState, useRef } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, Center } from '@react-three/drei'
-import TShirtModel from './components/TShirtModel_Final'
+import TShirtModel from './components/TShirtModel'
 import ColorPicker from './components/ColorPicker'
 import StickerPicker from './components/StickerPicker'
 import EditModeUI from './components/EditModeUI'
-import StickerEditor from './components/StickerEditor_Final'
-import { preprocessStickers, createStickerPreview, debugCoordinateMapping, verifyCoordinateSystem } from './utils/stickerMapping_Final'
+import StickerEditor from './components/StickerEditor'
+import { preprocessStickers, createStickerPreview, debugCoordinateMapping, verifyCoordinateSystem } from './utils/stickerMapping'
 import './mobile-fixes.css'
 
 function App() {

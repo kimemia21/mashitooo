@@ -26,7 +26,7 @@ A minimal full-stack application for displaying and customizing 3D t-shirt model
    ```
 
 2. **Add your t-shirt model:**
-   - Place a `.glb` file at `public/models/tshirt.glb`
+   - Place a `.glb` file at `public/models/oversized_t-shirt.glb`
    - See `public/models/README.md` for model requirements
 
 ## Development

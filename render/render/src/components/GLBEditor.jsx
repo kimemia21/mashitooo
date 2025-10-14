@@ -1,231 +1,123 @@
-import React, { useRef, useEffect, useState, useCallback, useMemo } from 'react'
-import { useGLTF } from '@react-three/drei'
-import { useFrame, useThree } from '@react-three/fiber'
+// GLBEditor.jsx
+import React, { useRef, useState, useCallback } from 'react'
+import { Canvas, useThree } from '@react-three/fiber'
+import { useGLTF, OrbitControls, TransformControls } from '@react-three/drei'
 import * as THREE from 'three'
+import { DecalSticker } from './DecalSticker' // New component
 
-function GLBEditor({ 
-  modelUrl = null,
-  onModelLoad,
-  onModelChange,
-  editMode = 'OBJECT', // 'OBJECT' or 'EDIT'
-  selectionMode = 'FACE', // 'VERTEX', 'EDGE', 'FACE'
-  selectedObjects = [],
-  onObjectSelect,
-  transformMode = null, // null, 'MOVE', 'ROTATE', 'SCALE'
-  onTransformModeChange
-}) {
-  const group = useRef()
-  const { scene, camera, raycaster, mouse, gl } = useThree()
-  const [hoveredObject, setHoveredObject] = useState(null)
-  const [meshes, setMeshes] = useState([])
-  const [editModeGeometry, setEditModeGeometry] = useState(null)
-  const [selectedVertices, setSelectedVertices] = useState([])
-  const [selectedEdges, setSelectedEdges] = useState([])
-  const [selectedFaces, setSelectedFaces] = useState([])
+const T_SHIRT_MODEL_URL = '/models/oversized_t-shirt.glb'
+const STICKER_URL = '/stickers/my_logo.png' // Example sticker
+
+// Main component that wraps the 3D scene
+function SceneManager({ stickerImage, initialStickers = [] }) {
+  const { scene, camera } = useThree()
+  const [stickers, setStickers] = useState(initialStickers)
+  const [selectedStickerId, setSelectedStickerId] = useState(null)
   
-  // Load GLB model
-  const { nodes, materials, animations } = useGLTF(modelUrl || '/models/t_shirt.glb')
-  
-  // Process loaded model into editable meshes
-  useEffect(() => {
-    if (!nodes) return
-    
-    const processedMeshes = []
-    Object.entries(nodes).forEach(([name, node]) => {
-      if (node.isMesh) {
-        // Clone geometry to make it editable
-        const editableGeometry = node.geometry.clone()
-        editableGeometry.computeBoundingBox()
-        editableGeometry.computeBoundingSphere()
-        
-        const meshData = {
-          id: name,
-          name: name,
-          originalNode: node,
-          geometry: editableGeometry,
-          material: node.material,
-          position: new THREE.Vector3().copy(node.position),
-          rotation: new THREE.Euler().copy(node.rotation),
-          scale: new THREE.Vector3().copy(node.scale),
-          visible: true,
-          selected: false
-        }
-        processedMeshes.push(meshData)
-      }
-    })
-    
-    setMeshes(processedMeshes)
-    onModelLoad && onModelLoad(processedMeshes)
-  }, [nodes, materials, onModelLoad])
-  
-  // Handle object selection via raycasting
-  const handlePointerClick = useCallback((event) => {
-    if (!meshes.length) return
-    
-    // Update mouse coordinates
-    const rect = gl.domElement.getBoundingClientRect()
-    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
-    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
-    
-    // Raycast to find intersected objects
-    raycaster.setFromCamera(mouse, camera)
-    
-    if (editMode === 'OBJECT') {
-      // Object mode - select entire meshes
-      const meshRefs = meshes.map(mesh => mesh.ref?.current).filter(Boolean)
-      const intersects = raycaster.intersectObjects(meshRefs, true)
-      
-      if (intersects.length > 0) {
-        const intersectedMesh = intersects[0].object
-        const meshIndex = meshes.findIndex(mesh => mesh.ref?.current === intersectedMesh)
-        
-        if (meshIndex >= 0) {
-          const isShiftClick = event.shiftKey
-          onObjectSelect && onObjectSelect(meshIndex, isShiftClick)
-        }
-      } else {
-        // Clicked empty space - deselect all
-        onObjectSelect && onObjectSelect(null, false)
-      }
-    } else if (editMode === 'EDIT') {
-      // Edit mode - select vertices/edges/faces
-      handleEditModeSelection(event)
-    }
-  }, [meshes, editMode, camera, raycaster, mouse, gl, onObjectSelect])
-  
-  // Handle edit mode selection (vertices, edges, faces)
-  const handleEditModeSelection = useCallback((event) => {
-    // Implementation for vertex/edge/face selection
-    // This would involve more complex raycasting and geometry analysis
-    console.log('Edit mode selection not yet implemented')
-  }, [])
-  
-  // Handle hover effects
-  const handlePointerMove = useCallback((event) => {
-    if (!meshes.length) return
-    
-    const rect = gl.domElement.getBoundingClientRect()
-    mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1
-    mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1
-    
-    raycaster.setFromCamera(mouse, camera)
-    
-    if (editMode === 'OBJECT') {
-      const meshRefs = meshes.map(mesh => mesh.ref?.current).filter(Boolean)
-      const intersects = raycaster.intersectObjects(meshRefs, true)
-      
-      if (intersects.length > 0) {
-        const intersectedMesh = intersects[0].object
-        const meshIndex = meshes.findIndex(mesh => mesh.ref?.current === intersectedMesh)
-        setHoveredObject(meshIndex >= 0 ? meshIndex : null)
-        gl.domElement.style.cursor = 'pointer'
-      } else {
-        setHoveredObject(null)
-        gl.domElement.style.cursor = 'default'
-      }
-    }
-  }, [meshes, editMode, camera, raycaster, mouse, gl])
-  
-  // Attach event listeners
-  useEffect(() => {
-    const canvas = gl.domElement
-    canvas.addEventListener('click', handlePointerClick)
-    canvas.addEventListener('mousemove', handlePointerMove)
-    
-    return () => {
-      canvas.removeEventListener('click', handlePointerClick)
-      canvas.removeEventListener('mousemove', handlePointerMove)
-    }
-  }, [gl.domElement, handlePointerClick, handlePointerMove])
-  
-  // Create materials with selection highlighting
-  const createMaterial = useCallback((originalMaterial, isSelected, isHovered) => {
-    if (!originalMaterial) {
-      return new THREE.MeshStandardMaterial({ color: '#cccccc' })
-    }
-    
-    const material = originalMaterial.clone()
-    
-    if (isSelected) {
-      // Orange outline for selected objects (Blender style)
-      material.emissive = new THREE.Color('#ff6600')
-      material.emissiveIntensity = 0.3
-    } else if (isHovered) {
-      // Light glow for hovered objects
-      material.emissive = new THREE.Color('#ffffff')
-      material.emissiveIntensity = 0.1
-    }
-    
-    return material
-  }, [])
-  
-  if (!meshes.length) {
-    return (
-      <mesh>
-        <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial color="#cccccc" />
-      </mesh>
-    )
+  // Load the GLB model
+  const { nodes } = useGLTF(T_SHIRT_MODEL_URL)
+  const tShirtMesh = nodes.T_Shirt || Object.values(nodes).find(n => n.isMesh && n.name.toLowerCase().includes('shirt'))
+
+  if (!tShirtMesh) {
+    // Basic fallback if the GLB is missing or the mesh name is wrong
+    return <mesh><boxGeometry args={[1, 1, 1]} /><meshStandardMaterial color="hotpink" /></mesh>
   }
   
-  return (
-    <group ref={group} dispose={null}>
-      {meshes.map((meshData, index) => {
-        const isSelected = selectedObjects.includes(index)
-        const isHovered = hoveredObject === index
-        const material = createMaterial(meshData.material, isSelected, isHovered)
-        
-        return (
-          <mesh
-            key={meshData.id}
-            ref={(ref) => {
-              if (ref) {
-                meshData.ref = { current: ref }
-              }
-            }}
-            geometry={meshData.geometry}
-            material={material}
-            position={meshData.position}
-            rotation={meshData.rotation}
-            scale={meshData.scale}
-            visible={meshData.visible}
-            castShadow
-            receiveShadow
-            userData={{ meshIndex: index, meshData }}
-          />
-        )
-      })}
+  // Get a reference to the actual 3D mesh object for raycasting
+  const modelRef = useRef()
+  
+  // Find the selected sticker object
+  const selectedSticker = stickers.find(s => s.id === selectedStickerId)
+
+  // --- Core Placement Logic (Raycasting) ---
+  const handleSurfaceClick = useCallback((event) => {
+    // If we clicked on a DecalSticker, select it instead of creating a new one
+    if (event.object.userData.isSticker) {
+      setSelectedStickerId(event.object.userData.id)
+      return
+    }
+
+    // Only create a new decal if we hit the T-Shirt mesh
+    if (event.object === modelRef.current) {
+      // event.point is the 3D coordinate where the raycaster hit the mesh
+      // event.face.normal is the direction the surface is facing
       
-      {/* Edit mode visualization */}
-      {editMode === 'EDIT' && selectedObjects.length > 0 && (
-        <EditModeVisualization
-          meshes={meshes}
-          selectedObjects={selectedObjects}
-          selectionMode={selectionMode}
-          selectedVertices={selectedVertices}
-          selectedEdges={selectedEdges}
-          selectedFaces={selectedFaces}
+      const newSticker = {
+        id: THREE.MathUtils.generateUUID(),
+        position: [event.point.x, event.point.y, event.point.z], // 3D position
+        rotation: [0, 0, 0], // Initial rotation is 0
+        normal: [event.face.normal.x, event.face.normal.y, event.face.normal.z],
+        scale: 0.1, // Initial scale
+        url: stickerImage || STICKER_URL,
+      }
+
+      setStickers(prev => [...prev, newSticker])
+      setSelectedStickerId(newSticker.id)
+    }
+  }, [stickerImage])
+
+  // --- Core Transform Logic (Handle Drag/Scale End) ---
+  const onTransformEnd = useCallback((e) => {
+    if (!selectedSticker) return
+
+    // TransformControls updates the position/rotation/scale of the decal's parent mesh
+    // We need to capture these new values and update our state
+    const newPosition = e.target.object.position.toArray()
+    const newRotation = e.target.object.rotation.toArray()
+    const newScale = e.target.object.scale.x // Assuming uniform scale
+
+    setStickers(prev => prev.map(s => s.id === selectedSticker.id ? {
+      ...s,
+      position: newPosition,
+      rotation: [newRotation[0], newRotation[1], newRotation[2]],
+      scale: newScale,
+    } : s))
+  }, [selectedSticker])
+  
+  return (
+    <group>
+      {/* 1. The T-Shirt Model Mesh (Raycast Target) */}
+      <primitive 
+        ref={modelRef}
+        object={tShirtMesh.geometry}
+        material={tShirtMesh.material} // You might need a specific material here
+        scale={[1, 1, 1]}
+        onClick={handleSurfaceClick}
+      />
+      
+      {/* 2. All Decals (Stickers) */}
+      {stickers.map((sticker) => (
+        <DecalSticker
+          key={sticker.id}
+          sticker={sticker}
+          targetMesh={modelRef.current} // Pass the target mesh for decal projection
+          onSelect={setSelectedStickerId}
+          isSelected={sticker.id === selectedStickerId}
+          onDragEnd={onTransformEnd}
         />
-      )}
+      ))}
+      
+      {/* 3. Global Camera Controls */}
+      <OrbitControls makeDefault />
+      
+      {/* Basic lighting */}
+      <ambientLight intensity={0.5} />
+      <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} castShadow />
     </group>
   )
 }
 
-// Component for visualizing edit mode selections
-function EditModeVisualization({ 
-  meshes, 
-  selectedObjects, 
-  selectionMode, 
-  selectedVertices, 
-  selectedEdges, 
-  selectedFaces 
-}) {
-  // This would render vertex points, edge highlights, face selections
-  // Implementation would involve creating geometry for points and lines
-  return null
+
+// The final exported component that sets up the Canvas
+function GLBEditor({ modelUrl, stickerImage }) {
+    return (
+        <Canvas camera={{ position: [0, 0, 3], fov: 50 }}>
+            <SceneManager stickerImage={stickerImage} />
+        </Canvas>
+    )
 }
 
-// Preload default model
-useGLTF.preload('/models/t_shirt.glb')
+// Preload is still good practice
+useGLTF.preload(T_SHIRT_MODEL_URL)
 
 export default GLBEditor
