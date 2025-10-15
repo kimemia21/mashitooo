@@ -205,10 +205,11 @@ function App() {
   return (
     <div style={{ 
       width: '100vw', 
-      height: '100vh', 
+      height: '100dvh',
       position: 'relative',
-      background: 'linear-gradient(135deg, #f0f0f0 0%, #e0e0e0 100%)',
-      overflow: 'hidden'
+      background: '#2a2a2a',
+      overflow: 'hidden',
+      fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
       
       {/* Main 3D View Mode */}
@@ -244,71 +245,103 @@ function App() {
             </Center>
           </Canvas>
 
-          {/* UI Controls for View Mode */}
-          <ColorPicker 
-            color={tshirtColor} 
-            onChange={setTshirtColor} 
-          />
+          {/* UI Controls Layout - Proper Z-index and positioning */}
           
-          <StickerPicker 
-            onStickerSelect={handleAddSticker}
-            stickers={stickerLibrary}
-            onStickerUpload={handleStickerUpload}
-          />
-
-          {/* Main Edit Button */}
+          {/* Left Panel - Color Picker (Top Left) */}
           <div style={{
             position: 'absolute',
-            bottom: '30px',
+            top: 0,
+            left: 0,
+            zIndex: 100,
+            pointerEvents: 'none'
+          }}>
+            <div style={{ pointerEvents: 'auto' }}>
+              <ColorPicker 
+                color={tshirtColor} 
+                onChange={setTshirtColor} 
+              />
+            </div>
+          </div>
+          
+          {/* Right Panel - Sticker Picker (Top Right) */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            zIndex: 100,
+            pointerEvents: 'none'
+          }}>
+            <div style={{ pointerEvents: 'auto' }}>
+              <StickerPicker 
+                onStickerSelect={handleAddSticker}
+                stickers={stickerLibrary}
+                onStickerUpload={handleStickerUpload}
+              />
+            </div>
+          </div>
+
+          {/* Bottom Center - Main Edit Button */}
+          <div style={{
+            position: 'absolute',
+            bottom: 'max(20px, env(safe-area-inset-bottom, 20px))',
             left: '50%',
             transform: 'translateX(-50%)',
-            zIndex: 1000
+            zIndex: 200,
+            display: 'flex',
+            gap: 'clamp(8px, 2vw, 12px)',
+            flexWrap: 'wrap',
+            justifyContent: 'center',
+            padding: '0 12px',
+            maxWidth: '100vw'
           }}>
             <button 
               onClick={handleEditMode}
               style={{
-                background: '#007bff',
+                background: 'linear-gradient(to bottom, #5680c2 0%, #4a6fa8 100%)',
                 color: 'white',
-                border: 'none',
-                padding: '15px 30px',
-                borderRadius: '25px',
-                fontSize: '16px',
-                fontWeight: 'bold',
+                border: '1px solid #3a5a8a',
+                padding: 'clamp(10px, 2.5vw, 12px) clamp(20px, 5vw, 28px)',
+                borderRadius: '4px',
+                fontSize: 'clamp(12px, 3vw, 13px)',
+                fontWeight: '500',
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0, 123, 255, 0.3)',
-                transition: 'all 0.3s ease'
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.3)',
+                transition: 'all 0.15s',
+                minHeight: '44px',
+                whiteSpace: 'nowrap'
               }}
               onMouseEnter={(e) => {
-                e.target.style.transform = 'translateY(-2px)'
-                e.target.style.boxShadow = '0 6px 20px rgba(0, 123, 255, 0.4)'
+                e.target.style.background = 'linear-gradient(to bottom, #6890d2 0%, #5a7fb8 100%)'
               }}
               onMouseLeave={(e) => {
-                e.target.style.transform = 'translateY(0)'
-                e.target.style.boxShadow = '0 4px 12px rgba(0, 123, 255, 0.3)'
+                e.target.style.background = 'linear-gradient(to bottom, #5680c2 0%, #4a6fa8 100%)'
               }}
             >
-              Edit T-Shirt
+              Edit Design
             </button>
-          </div>
 
-          {/* Reset View Button */}
-          <div style={{
-            position: 'absolute',
-            bottom: '30px',
-            right: '30px',
-            zIndex: 1000
-          }}>
             <button 
               onClick={handleResetView}
               style={{
-                background: 'rgba(255, 255, 255, 0.9)',
-                color: '#333',
-                border: '1px solid #ddd',
-                padding: '10px 15px',
-                borderRadius: '20px',
-                fontSize: '14px',
+                background: 'linear-gradient(to bottom, #3e3e3e 0%, #2d2d2d 100%)',
+                color: '#d5d5d5',
+                border: '1px solid #1a1a1a',
+                padding: 'clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 20px)',
+                borderRadius: '4px',
+                fontSize: 'clamp(11px, 2.8vw, 12px)',
+                fontWeight: '400',
                 cursor: 'pointer',
-                backdropFilter: 'blur(10px)'
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 8px rgba(0,0,0,0.3)',
+                backdropFilter: 'blur(10px)',
+                transition: 'all 0.15s',
+                minHeight: '44px',
+                whiteSpace: 'nowrap'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.background = 'linear-gradient(to bottom, #494949 0%, #373737 100%)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.background = 'linear-gradient(to bottom, #3e3e3e 0%, #2d2d2d 100%)'
               }}
             >
               Reset View
@@ -350,16 +383,53 @@ function App() {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          background: 'rgba(0, 0, 0, 0.8)',
-          color: 'white',
-          padding: '20px 40px',
-          borderRadius: '10px',
-          fontSize: '16px',
-          zIndex: 2000
+          background: 'rgba(42, 42, 42, 0.95)',
+          border: '1px solid #1a1a1a',
+          color: '#d5d5d5',
+          padding: 'clamp(16px, 4vw, 24px) clamp(24px, 6vw, 40px)',
+          borderRadius: '4px',
+          fontSize: 'clamp(13px, 3.2vw, 14px)',
+          zIndex: 3000,
+          maxWidth: '90vw',
+          textAlign: 'center',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          fontWeight: '500'
         }}>
+          <div style={{
+            width: '32px',
+            height: '32px',
+            border: '3px solid #3d3d3d',
+            borderTop: '3px solid #5680c2',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 12px'
+          }} />
           Applying designs to t-shirt...
         </div>
       )}
+
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+          /* Ensure buttons don't overlap on small screens */
+          body {
+            -webkit-tap-highlight-color: transparent;
+          }
+        }
+
+        @media (max-width: 480px) {
+          /* Stack buttons vertically on very small screens */
+          .button-group {
+            flex-direction: column !important;
+            width: 100%;
+          }
+        }
+      `}</style>
     </div>
   )
 }
