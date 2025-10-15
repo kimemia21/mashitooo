@@ -1,280 +1,258 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react'
 import { useGLTF } from '@react-three/drei'
-import { useFrame, useThree } from '@react-three/fiber'
+import { useThree, useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 
-function TShirtModel({ 
-  color = '#ffffff', 
-  stickers = [],
-  viewMode = 'rendered' 
-}) {
+const ROTATION_SPEED = 0.015
+const DAMPING = 0.95
+const MAX_X_ROTATION = Math.PI / 2.5
+const MIN_SCALE = 0.8
+const MAX_SCALE = 4
+const AUTO_CENTER_SPEED = 0.08
+const INERTIA_THRESHOLD = 0.0008
+const IDLE_TIMEOUT = 2000
+
+export default function TShirtModel({ color = '#ffffff', stickers = [], viewMode = 'rendered' }) {
   const group = useRef()
-  const meshRef = useRef()
-  
-  // Try to load the GLB model, with fallback
-  let nodes, materials, error
-  try {
-    const gltf = useGLTF('/models/oversized_t-shirt.glb', true)
-    nodes = gltf.nodes
-    materials = gltf.materials
-  } catch (e) {
-    console.log('T-shirt model not found, using fallback geometry')
-    error = e
-  }
+  const { camera } = useThree()
 
-  // State for managing texture updates
-  const [textureVersion, setTextureVersion] = useState(0)
+  const [rotation, setRotation] = useState({ x: 0, y: 0 })
+  const [velocity, setVelocity] = useState({ x: 0, y: 0 })
+  const [scale, setScale] = useState(1)
+  const [targetRotation, setTargetRotation] = useState({ x: 0, y: 0 })
+  const [isInteracting, setIsInteracting] = useState(false)
+  const [shouldAutoCenter, setShouldAutoCenter] = useState(false)
+  const lastInteractionTime = useRef(Date.now())
+  const [touchState, setTouchState] = useState({
+    dragging: false,
+    pinching: false,
+    lastX: 0,
+    lastY: 0,
+    lastDistance: 0,
+    initialTouch: null,
+  })
 
-  // Create base fabric texture
-  const fabricTexture = useMemo(() => {
-    const canvas = document.createElement('canvas')
-canvas.width = 1024
-canvas.height = 1280
-    const ctx = canvas.getContext('2d')
-    
-    // Create fabric background identical to editor
-    ctx.fillStyle = '#ffffff'
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
-    
-    // Add fabric texture identical to editor
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.02)'
-    for (let i = 0; i < canvas.width; i += 2) {
-      for (let j = 0; j < canvas.height; j += 2) {
-        if (Math.random() > 0.95) {
-          ctx.fillRect(i, j, 1, 1)
-        }
-      }
-    }
+  const isMobile = useMemo(() => window.innerWidth < 768, [])
 
-    // Add weave pattern identical to editor
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.015)'
-    ctx.lineWidth = 0.5
-    for (let i = 0; i < canvas.width; i += 3) {
-      ctx.beginPath()
-      ctx.moveTo(i, 0)
-      ctx.lineTo(i, canvas.height)
-      ctx.stroke()
-    }
-    for (let i = 0; i < canvas.height; i += 3) {
-      ctx.beginPath()
-      ctx.moveTo(0, i)
-      ctx.lineTo(canvas.width, i)
-      ctx.stroke()
-    }
-    
-    const texture = new THREE.CanvasTexture(canvas)
-    texture.wrapS = THREE.ClampToEdgeWrapping
-    texture.wrapT = THREE.ClampToEdgeWrapping
-    texture.flipY = false
-    return texture
-  }, [color])
-
-  // Create material
-  const compositeMaterial = useMemo(() => {
-    const material = new THREE.MeshStandardMaterial({
-      color: color,
-      roughness: 0.7,
-      metalness: 0.02,
-      map: fabricTexture
-    })
-
-    // Apply view mode
-    switch (viewMode) {
-      case 'wireframe':
-        material.wireframe = true
-        break
-      case 'solid':
-        material.wireframe = false
-        material.map = null
-        break
-      case 'rendered':
-        material.wireframe = false
-        break
-    }
-
-    return material
-  }, [color, viewMode, fabricTexture])
-
-  // CRITICAL: PERFECT 1:1 coordinate mapping - NO transformation!
+  // Camera setup optimized for mobile
   useEffect(() => {
-    if (stickers.length === 0) {
-      compositeMaterial.map = fabricTexture
-      compositeMaterial.needsUpdate = true
-      return
+    if (camera.isPerspectiveCamera) {
+      camera.fov = isMobile ? 50 : 40
+      camera.position.set(0, 0, isMobile ? 5.5 : 4)
+      camera.lookAt(0, 0, 0)
+      camera.updateProjectionMatrix()
     }
+  }, [camera, isMobile])
 
-    console.log('=== RENDERING STICKERS ON 3D MODEL ===')
-    console.log('Number of stickers to render:', stickers.length)
+  // Load model
+  const { nodes, materials } = useGLTF('/models/oversized_t-shirt.glb')
 
-    // Create texture canvas with EXACT same dimensions as calculations
+  // Fabric material
+  const fabricTexture = useMemo(() => {
     const canvas = document.createElement('canvas')
     canvas.width = 1024
     canvas.height = 1024
     const ctx = canvas.getContext('2d')
-    
-    // Draw the fabric base first
-    ctx.drawImage(fabricTexture.image, 0, 0, canvas.width, canvas.height)
-    
-    let loadedCount = 0
-    const totalStickers = stickers.length
-    
-    const updateTexture = () => {
-      const texture = new THREE.CanvasTexture(canvas)
-      texture.flipY = false
-      texture.wrapS = THREE.ClampToEdgeWrapping
-      texture.wrapT = THREE.ClampToEdgeWrapping
-      texture.needsUpdate = true
-      compositeMaterial.map = texture
-      compositeMaterial.needsUpdate = true
-      setTextureVersion(prev => prev + 1)
-      console.log('✅ Updated 3D texture with', totalStickers, 'stickers')
-    }
-    
-    if (totalStickers === 0) {
-      updateTexture()
-      return
-    }
-    
-    stickers.forEach((sticker, index) => {
-      const img = new Image()
-      img.crossOrigin = 'anonymous'
-      img.onload = () => {
-        console.log(`Rendering sticker ${index + 1}:`, {
-          name: sticker.name,
-          editorCoords: { x: sticker.x + '%', y: sticker.y + '%' },
-          editorSize: { width: sticker.width + 'px', height: sticker.height + 'px' },
-          rotation: sticker.rotation + '°'
-        })
+    ctx.fillStyle = color
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.flipY = false
+    return texture
+  }, [color])
 
-        // PERFECT COORDINATE MAPPING - USE EXACT SAME PERCENTAGES
-        // Editor uses percentages, we use the SAME percentages on texture
-        const textureX = (sticker.x / 100) * canvas.width
-        const textureY = (sticker.y / 100) * canvas.height
-        
-        // Scale size proportionally from editor dimensions to texture dimensions
-        // Editor dimensions are 400x500 (from StickerEditor_Final.jsx)
-        const editorWidth = 400
-        const editorHeight = 500
-        const scaleX = canvas.width / editorWidth
-        const scaleY = canvas.height / editorHeight
-        
-        const textureWidth = sticker.width * scaleX
-        const textureHeight = sticker.height * scaleY
-        
-        console.log(`Texture mapping ${index + 1}:`, {
-          texturePos: { x: textureX.toFixed(1), y: textureY.toFixed(1) },
-          textureSize: { width: textureWidth.toFixed(1), height: textureHeight.toFixed(1) },
-          scale: { x: scaleX.toFixed(3), y: scaleY.toFixed(3) }
-        })
-        
-        // Apply rotation and draw sticker
-        ctx.save()
-        
-        // Move to sticker center
-        ctx.translate(textureX, textureY)
-        
-        // Apply rotation if present
-        if (sticker.rotation && sticker.rotation !== 0) {
-          ctx.rotate((sticker.rotation * Math.PI) / 180)
-        }
-        
-        // Add subtle shadow for realism
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.2)'
-        ctx.shadowBlur = 4
-        ctx.shadowOffsetX = 2
-        ctx.shadowOffsetY = 2
-        
-        // Draw sticker centered at current position
-        ctx.drawImage(
-          img, 
-          -textureWidth / 2,   // Center horizontally
-          -textureHeight / 2,  // Center vertically
-          textureWidth, 
-          textureHeight
-        )
-        
-        ctx.restore()
-        
-        console.log(`✅ Rendered sticker ${index + 1} successfully`)
-        
-        loadedCount++
-        if (loadedCount === totalStickers) {
-          updateTexture()
-          console.log('=== ALL STICKERS RENDERED ===')
-        }
-      }
-      
-      img.onerror = () => {
-        console.error(`❌ Failed to load sticker ${index + 1}:`, sticker.url)
-        loadedCount++
-        if (loadedCount === totalStickers) {
-          updateTexture()
-        }
-      }
-      
-      img.src = sticker.url
+  const material = useMemo(() => {
+    const mat = new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.75,
+      metalness: 0.05,
+      map: fabricTexture,
     })
-  }, [stickers, compositeMaterial, fabricTexture])
+    if (viewMode === 'wireframe') mat.wireframe = true
+    if (viewMode === 'solid') mat.map = null
+    return mat
+  }, [viewMode, color, fabricTexture])
 
-  // Enhanced fallback t-shirt geometry
-  if (error || !nodes || Object.keys(nodes).length === 0) {
-    console.log('Using fallback t-shirt geometry')
-    
-    return (
-      <group ref={group} scale={[1, 1, 1]}>
-        {/* Main t-shirt body with proper proportions */}
-        <mesh ref={meshRef} position={[0, 0, 0]} castShadow receiveShadow>
-          <boxGeometry args={[2.2, 2.8, 0.12]} />
-          <primitive object={compositeMaterial} />
-        </mesh>
-        
-        {/* Left sleeve */}
-        <mesh position={[-1.5, 0.9, 0]} rotation={[0, 0, -0.15]} castShadow receiveShadow>
-          <boxGeometry args={[0.9, 1.1, 0.12]} />
-          <primitive object={compositeMaterial} />
-        </mesh>
-        
-        {/* Right sleeve */}
-        <mesh position={[1.5, 0.9, 0]} rotation={[0, 0, 0.15]} castShadow receiveShadow>
-          <boxGeometry args={[0.9, 1.1, 0.12]} />
-          <primitive object={compositeMaterial} />
-        </mesh>
-        
-        {/* Collar/neckline */}
-        <mesh position={[0, 1.4, 0.01]} castShadow receiveShadow>
-          <ringGeometry args={[0.18, 0.4, 16]} />
-          <meshStandardMaterial color={color} roughness={0.8} />
-        </mesh>
-      </group>
-    )
-  }
+  // Enhanced touch handlers
+  useEffect(() => {
+    const canvas = document.querySelector('canvas')
+    if (!canvas) return
 
-  // Render the actual loaded t-shirt model
-  return (
-    <group ref={group} dispose={null} scale={[1, 1, 1]}>
-      {Object.entries(nodes).map(([name, node]) => {
-        if (node.isMesh && node.geometry) {
-          return (
-            <mesh
-              key={name}
-              ref={name === 'T_Shirt' || name.includes('shirt') || name.includes('Shirt') ? meshRef : undefined}
-              geometry={node.geometry}
-              material={compositeMaterial}
-              position={node.position}
-              rotation={node.rotation}
-              scale={node.scale}
-              castShadow
-              receiveShadow
-            />
-          )
+    const distance = (t1, t2) => {
+      const dx = t1.clientX - t2.clientX
+      const dy = t1.clientY - t2.clientY
+      return Math.sqrt(dx * dx + dy * dy)
+    }
+
+    const handleTouchStart = (e) => {
+      lastInteractionTime.current = Date.now()
+      setIsInteracting(true)
+      setShouldAutoCenter(false)
+      
+      if (e.touches.length === 1) {
+        setTouchState({
+          dragging: true,
+          pinching: false,
+          lastX: e.touches[0].clientX,
+          lastY: e.touches[0].clientY,
+          lastDistance: 0,
+          initialTouch: { x: e.touches[0].clientX, y: e.touches[0].clientY },
+        })
+        setVelocity({ x: 0, y: 0 })
+      } else if (e.touches.length === 2) {
+        const d = distance(e.touches[0], e.touches[1])
+        setTouchState({
+          dragging: false,
+          pinching: true,
+          lastX: 0,
+          lastY: 0,
+          lastDistance: d,
+          initialTouch: null,
+        })
+        setVelocity({ x: 0, y: 0 })
+      }
+    }
+
+    const handleTouchMove = (e) => {
+      e.preventDefault()
+      lastInteractionTime.current = Date.now()
+      
+      if (touchState.pinching && e.touches.length === 2) {
+        const d = distance(e.touches[0], e.touches[1])
+        const zoomFactor = d / touchState.lastDistance
+        const newScale = scale * zoomFactor
+        
+        // Smooth scaling with better responsiveness
+        setScale(Math.min(MAX_SCALE, Math.max(MIN_SCALE, newScale)))
+        setTouchState((prev) => ({ ...prev, lastDistance: d }))
+      } else if (touchState.dragging && e.touches.length === 1) {
+        const dx = e.touches[0].clientX - touchState.lastX
+        const dy = e.touches[0].clientY - touchState.lastY
+        
+        // Enhanced rotation with smoother control
+        const rotationX = dy * ROTATION_SPEED
+        const rotationY = dx * ROTATION_SPEED
+        
+        setRotation((r) => ({
+          x: Math.max(-MAX_X_ROTATION, Math.min(MAX_X_ROTATION, r.x + rotationX)),
+          y: r.y + rotationY,
+        }))
+        
+        // Stronger velocity for better momentum
+        setVelocity({ x: rotationX * 0.15, y: rotationY * 0.15 })
+        
+        setTouchState((prev) => ({
+          ...prev,
+          lastX: e.touches[0].clientX,
+          lastY: e.touches[0].clientY,
+        }))
+      }
+    }
+
+    const handleTouchEnd = () => {
+      setIsInteracting(false)
+      setTouchState({ dragging: false, pinching: false, lastX: 0, lastY: 0, lastDistance: 0, initialTouch: null })
+    }
+
+    // Double tap to reset (game-like interaction)
+    let lastTap = 0
+    const handleDoubleTap = (e) => {
+      const currentTime = Date.now()
+      const tapLength = currentTime - lastTap
+      if (tapLength < 300 && tapLength > 0) {
+        e.preventDefault()
+        // Reset to front view
+        setTargetRotation({ x: 0, y: 0 })
+        setShouldAutoCenter(true)
+        setScale(1)
+        setVelocity({ x: 0, y: 0 })
+      }
+      lastTap = currentTime
+    }
+
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false })
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false })
+    canvas.addEventListener('touchstart', handleDoubleTap, { passive: false })
+
+    return () => {
+      canvas.removeEventListener('touchstart', handleTouchStart)
+      canvas.removeEventListener('touchmove', handleTouchMove)
+      canvas.removeEventListener('touchend', handleTouchEnd)
+      canvas.removeEventListener('touchstart', handleDoubleTap)
+    }
+  }, [touchState, scale])
+
+  // Auto-center after idle timeout
+  useEffect(() => {
+    const checkIdle = setInterval(() => {
+      if (!isInteracting && Date.now() - lastInteractionTime.current > IDLE_TIMEOUT) {
+        const velocityMagnitude = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y)
+        if (velocityMagnitude < INERTIA_THRESHOLD) {
+          setShouldAutoCenter(true)
         }
-        return null
-      })}
+      }
+    }, 500)
+
+    return () => clearInterval(checkIdle)
+  }, [isInteracting, velocity])
+
+  // Enhanced animation frame with auto-centering
+  useFrame(() => {
+    if (group.current) {
+      // Auto-center logic
+      if (shouldAutoCenter && !isInteracting) {
+        const dx = targetRotation.x - rotation.x
+        const dy = targetRotation.y - rotation.y
+        const distance = Math.sqrt(dx * dx + dy * dy)
+        
+        if (distance > 0.01) {
+          setRotation((r) => ({
+            x: r.x + dx * AUTO_CENTER_SPEED,
+            y: r.y + dy * AUTO_CENTER_SPEED,
+          }))
+        } else {
+          setShouldAutoCenter(false)
+          setRotation(targetRotation)
+        }
+      }
+      // Inertia and damping
+      else if (!isInteracting && !shouldAutoCenter) {
+        const velocityMagnitude = Math.sqrt(velocity.x * velocity.x + velocity.y * velocity.y)
+        
+        if (velocityMagnitude > INERTIA_THRESHOLD) {
+          setRotation((r) => ({
+            x: Math.max(-MAX_X_ROTATION, Math.min(MAX_X_ROTATION, r.x + velocity.x)),
+            y: r.y + velocity.y,
+          }))
+          setVelocity((v) => ({ x: v.x * DAMPING, y: v.y * DAMPING }))
+        } else {
+          setVelocity({ x: 0, y: 0 })
+        }
+      }
+      
+      group.current.rotation.x = rotation.x
+      group.current.rotation.y = rotation.y
+    }
+  })
+
+  const baseScale = isMobile ? 2 : 1
+  const finalScale = baseScale * scale
+
+  return (
+    <group ref={group} scale={[finalScale, finalScale, finalScale]}>
+      {Object.values(nodes).map((node, i) =>
+        node.isMesh ? (
+          <mesh
+            key={i}
+            geometry={node.geometry}
+            material={material}
+            castShadow
+            receiveShadow
+          />
+        ) : null
+      )}
     </group>
   )
 }
 
-// Preload the model
 useGLTF.preload('/models/oversized_t-shirt.glb')
-
-export default TShirtModel

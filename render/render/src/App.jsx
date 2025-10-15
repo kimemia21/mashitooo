@@ -1,13 +1,21 @@
 import React, { useState, useRef } from 'react'
+import { Menu, X, RotateCcw, Home } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, Center } from '@react-three/drei'
+import * as THREE from 'three'
 import TShirtModel from './components/TShirtModel'
+import ModernBackground from './components/ModernBackground'
 import ColorPicker from './components/ColorPicker'
 import StickerPicker from './components/StickerPicker'
 import EditModeUI from './components/EditModeUI'
 import StickerEditor from './components/StickerEditor'
 import { preprocessStickers, createStickerPreview, debugCoordinateMapping, verifyCoordinateSystem } from './utils/stickerMapping'
+import './theme.css'
 import './mobile-fixes.css'
+import './styles/simple-mobile.css'
+import { useResponsive } from './hooks/useResponsive'
+import Panel from './components/Panel'
+import IconButton from './components/IconButton'
 
 function App() {
   // Core application state
@@ -26,6 +34,11 @@ function App() {
   const [isApplying, setIsApplying] = useState(false)
   
   const controlsRef = useRef()
+  const { isMobile, isTablet, isDesktop } = useResponsive()
+  
+  // UI state for mobile
+  const [leftPanelOpen, setLeftPanelOpen] = useState(false)
+  const [rightPanelOpen, setRightPanelOpen] = useState(false)
 
   // Handle entering edit mode
   const handleEditMode = () => {
@@ -90,7 +103,7 @@ function App() {
     
     try {
       // Verify coordinate system first
-      verifyCoordinateSystem()
+      verifyCoordinateSystem(editorStickers)
       
       // Remove old stickers for this side
       const otherSideStickers = stickers.filter(s => s.side !== editSide)
@@ -109,7 +122,7 @@ function App() {
       
       // Process stickers with PERFECT coordinate preservation
       console.log('\n🔄 Processing coordinates...')
-      const processedStickers = preprocessStickers(editorStickers, editSide)
+      const processedStickers =await  preprocessStickers(editorStickers, editSide)
       
       // Verify each sticker mapping
       let allMappingsPerfect = true
@@ -203,11 +216,11 @@ function App() {
   }
 
   return (
-    <div style={{ 
+    <div className="app-container" style={{ 
       width: '100vw', 
       height: '100dvh',
       position: 'relative',
-      background: '#2a2a2a',
+      background: 'var(--bg-primary)',
       overflow: 'hidden',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
@@ -218,22 +231,61 @@ function App() {
           <Canvas
             camera={{ position: [0, 0, 5], fov: 50 }}
             style={{ width: '100%', height: '100%' }}
+            gl={{ 
+              antialias: true,
+              alpha: false,
+              powerPreference: 'high-performance',
+              preserveDrawingBuffer: false
+            }}
+            dpr={Math.min(window.devicePixelRatio, 2)}
+            shadows
           >
+            {/* Modern Studio Lighting */}
+            <ambientLight intensity={0.3} />
+            <directionalLight 
+              position={[10, 10, 5]} 
+              intensity={1.2} 
+              castShadow 
+              shadow-mapSize-width={2048}
+              shadow-mapSize-height={2048}
+              shadow-camera-far={50}
+              shadow-camera-left={-10}
+              shadow-camera-right={10}
+              shadow-camera-top={10}
+              shadow-camera-bottom={-10}
+            />
+            <directionalLight position={[-5, 5, 5]} intensity={0.3} />
+            <pointLight position={[0, -5, 5]} intensity={0.4} color="#4a9eff" />
+            
             <Environment preset="studio" />
+            
+            {/* Modern Background */}
+            <ModernBackground />
             
             {/* Model-only rotation controls */}
             <OrbitControls 
               ref={controlsRef}
-              enablePan={false}
+              enablePan={true}
               enableZoom={true}
               enableRotate={true}
               minDistance={2}
               maxDistance={10}
               enableDamping={true}
               dampingFactor={0.05}
-              rotateSpeed={0.8}
-              zoomSpeed={0.8}
+              rotateSpeed={1.0}
+              zoomSpeed={1.0}
+              panSpeed={0.8}
               target={[0, 0, 0]}
+              makeDefault
+              touches={{
+                ONE: 2,  // ROTATE
+                TWO: 1   // DOLLY_PAN
+              }}
+              mouseButtons={{
+                LEFT: 0,   // ROTATE
+                MIDDLE: 1, // DOLLY
+                RIGHT: 2   // PAN
+              }}
             />
             
             <Center>
@@ -247,106 +299,185 @@ function App() {
 
           {/* UI Controls Layout - Proper Z-index and positioning */}
           
-          {/* Left Panel - Color Picker (Top Left) */}
+          {/* Mobile Menu Button */}
+          {isMobile && (
+            <div style={{
+              position: 'fixed',
+              top: '16px',
+              left: '16px',
+              zIndex: 1001
+            }}>
+              <IconButton
+                icon={leftPanelOpen ? X : Menu}
+                onClick={() => setLeftPanelOpen(!leftPanelOpen)}
+                tooltip="Menu"
+                size={24}
+              />
+            </div>
+          )}
+
+          {/* Mobile Overlay */}
+          {isMobile && leftPanelOpen && (
+            <div 
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(0, 0, 0, 0.5)',
+                zIndex: 999,
+                backdropFilter: 'blur(4px)'
+              }}
+              onClick={() => setLeftPanelOpen(false)}
+            />
+          )}
+
+          {/* Left Panel - Color Picker */}
           <div style={{
-            position: 'absolute',
+            position: isMobile ? 'fixed' : 'absolute',
             top: 0,
             left: 0,
-            zIndex: 100,
-            pointerEvents: 'none'
+            width: isMobile ? '90vw' : 'auto',
+            maxWidth: isMobile ? '320px' : 'none',
+            height: isMobile ? '100vh' : 'auto',
+            zIndex: 1000,
+            transform: isMobile ? (leftPanelOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
+            transition: 'transform 0.3s ease',
+            pointerEvents: 'auto'
           }}>
-            <div style={{ pointerEvents: 'auto' }}>
+            <Panel 
+              title="Colors" 
+              collapsible={!isMobile} 
+              defaultOpen={!isMobile}
+            >
               <ColorPicker 
                 color={tshirtColor} 
                 onChange={setTshirtColor} 
               />
-            </div>
+            </Panel>
           </div>
           
-          {/* Right Panel - Sticker Picker (Top Right) */}
-          <div style={{
-            position: 'absolute',
-            top: 0,
-            right: 0,
-            zIndex: 100,
-            pointerEvents: 'none'
-          }}>
-            <div style={{ pointerEvents: 'auto' }}>
-              <StickerPicker 
-                onStickerSelect={handleAddSticker}
-                stickers={stickerLibrary}
-                onStickerUpload={handleStickerUpload}
+          {/* Right Panel - Sticker Picker (Desktop Only) */}
+          {!isMobile && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              zIndex: 100,
+              pointerEvents: 'auto'
+            }}>
+              <Panel 
+                title="Stickers" 
+                collapsible={true} 
+                defaultOpen={false}
+              >
+                <StickerPicker 
+                  onStickerSelect={handleAddSticker}
+                  stickers={stickerLibrary}
+                  onStickerUpload={handleStickerUpload}
+                />
+              </Panel>
+            </div>
+          )}
+
+          {/* Floating Action Buttons - Mobile */}
+          {isMobile && (
+            <>
+              {/* Bottom Right FAB Group */}
+              <div style={{
+                position: 'fixed',
+                bottom: '20px',
+                right: '20px',
+                zIndex: 200,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px'
+              }}>
+                <IconButton
+                  icon={Home}
+                  onClick={handleResetView}
+                  tooltip="Reset View"
+                  size={20}
+                />
+                <IconButton
+                  icon={RotateCcw}
+                  onClick={() => {
+                    if (controlsRef.current) {
+                      controlsRef.current.autoRotate = !controlsRef.current.autoRotate
+                    }
+                  }}
+                  tooltip="Auto Rotate"
+                  size={20}
+                />
+              </div>
+
+              {/* Bottom Center - Primary Action */}
+              <div style={{
+                position: 'fixed',
+                bottom: '20px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                zIndex: 200
+              }}>
+                <button 
+                  onClick={handleEditMode}
+                  className="btn primary"
+                  style={{
+                    padding: '16px 32px',
+                    fontSize: '16px',
+                    borderRadius: '24px',
+                    boxShadow: 'var(--glow)'
+                  }}
+                >
+                  ✨ Edit Design
+                </button>
+              </div>
+            </>
+          )}
+
+          {/* Desktop Controls */}
+          {!isMobile && (
+            <div style={{
+              position: 'absolute',
+              bottom: '20px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 200,
+              display: 'flex',
+              gap: '12px',
+              alignItems: 'center'
+            }}>
+              <button 
+                onClick={handleEditMode}
+                className="btn primary"
+                style={{
+                  padding: '12px 24px',
+                  fontSize: '14px'
+                }}
+              >
+                ✨ Edit Design
+              </button>
+
+              <IconButton
+                icon={Home}
+                onClick={handleResetView}
+                tooltip="Reset View"
+                size={18}
+              />
+              
+              <IconButton
+                icon={RotateCcw}
+                onClick={() => {
+                  if (controlsRef.current) {
+                    controlsRef.current.autoRotate = !controlsRef.current.autoRotate
+                  }
+                }}
+                tooltip="Auto Rotate"
+                size={18}
               />
             </div>
-          </div>
-
-          {/* Bottom Center - Main Edit Button */}
-          <div style={{
-            position: 'absolute',
-            bottom: 'max(20px, env(safe-area-inset-bottom, 20px))',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 200,
-            display: 'flex',
-            gap: 'clamp(8px, 2vw, 12px)',
-            flexWrap: 'wrap',
-            justifyContent: 'center',
-            padding: '0 12px',
-            maxWidth: '100vw'
-          }}>
-            <button 
-              onClick={handleEditMode}
-              style={{
-                background: 'linear-gradient(to bottom, #5680c2 0%, #4a6fa8 100%)',
-                color: 'white',
-                border: '1px solid #3a5a8a',
-                padding: 'clamp(10px, 2.5vw, 12px) clamp(20px, 5vw, 28px)',
-                borderRadius: '4px',
-                fontSize: 'clamp(12px, 3vw, 13px)',
-                fontWeight: '500',
-                cursor: 'pointer',
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.1), 0 2px 8px rgba(0,0,0,0.3)',
-                transition: 'all 0.15s',
-                minHeight: '44px',
-                whiteSpace: 'nowrap'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'linear-gradient(to bottom, #6890d2 0%, #5a7fb8 100%)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'linear-gradient(to bottom, #5680c2 0%, #4a6fa8 100%)'
-              }}
-            >
-              Edit Design
-            </button>
-
-            <button 
-              onClick={handleResetView}
-              style={{
-                background: 'linear-gradient(to bottom, #3e3e3e 0%, #2d2d2d 100%)',
-                color: '#d5d5d5',
-                border: '1px solid #1a1a1a',
-                padding: 'clamp(10px, 2.5vw, 12px) clamp(16px, 4vw, 20px)',
-                borderRadius: '4px',
-                fontSize: 'clamp(11px, 2.8vw, 12px)',
-                fontWeight: '400',
-                cursor: 'pointer',
-                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 8px rgba(0,0,0,0.3)',
-                backdropFilter: 'blur(10px)',
-                transition: 'all 0.15s',
-                minHeight: '44px',
-                whiteSpace: 'nowrap'
-              }}
-              onMouseEnter={(e) => {
-                e.target.style.background = 'linear-gradient(to bottom, #494949 0%, #373737 100%)'
-              }}
-              onMouseLeave={(e) => {
-                e.target.style.background = 'linear-gradient(to bottom, #3e3e3e 0%, #2d2d2d 100%)'
-              }}
-            >
-              Reset View
-            </button>
-          </div>
+          )}
         </>
       )}
 
