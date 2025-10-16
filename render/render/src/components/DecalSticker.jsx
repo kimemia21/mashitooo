@@ -3,39 +3,27 @@ import React, { useRef, useMemo } from 'react'
 import * as THREE from 'three'
 import { Decal, useTexture, TransformControls } from '@react-three/drei'
 
-export function DecalSticker({ sticker, targetMesh, onSelect, isSelected, onDragEnd }) {
+export function DecalSticker({ sticker, onSelect, isSelected, onDragEnd }) {
   const decalRef = useRef()
   const transformRef = useRef()
+  const meshRef = useRef()
   const texture = useTexture(sticker.url)
   
-  // The Decal component requires a position, rotation, and size
-  const positionVector = useMemo(() => new THREE.Vector3(...sticker.position), [sticker.position])
-  const normalVector = useMemo(() => new THREE.Vector3(...sticker.normal), [sticker.normal])
-
-
-  // Calculate the rotation needed to align the decal to the surface normal
-  // Three.js DecalGeometry uses a quaternion for orientation, but useMemo is cleaner here
-  const rotationQuaternion = useMemo(() => {
-    const orientation = new THREE.Euler()
-    orientation.setFromVector3(normalVector)
-    return new THREE.Quaternion().setFromEuler(orientation)
-  }, [normalVector])
-
-  // Decal size is based on the sticker's scale, converted to a THREE.Vector3
-  // The decal is a 3D object, so scale must be in 3 dimensions. We assume depth (z) is small.
-  const sizeVector = useMemo(() => new THREE.Vector3(sticker.scale, sticker.scale * 1.25, sticker.scale), [sticker.scale])
-
-  // --- TransformControls attaches to a mesh to enable drag/resize. ---
-  // We use a simple, invisible box as the transformable object, and the Decal projects off it.
-  const meshRef = useRef()
+  // Convert sticker position to 3D coordinates
+  // For now, let's place the sticker at a default position on the mesh surface
+  const position = useMemo(() => {
+    // Default position on the front of the t-shirt
+    return sticker.position || [0, 0, 0.5]
+  }, [sticker.position])
   
-  // Set up the sticker mesh's initial position and rotation
-  // This mesh is what the TransformControls will manipulate
-  if (meshRef.current) {
-    meshRef.current.position.set(...sticker.position)
-    meshRef.current.rotation.set(...sticker.rotation)
-    meshRef.current.scale.set(sticker.scale, sticker.scale, sticker.scale)
-  }
+  const rotation = useMemo(() => {
+    // Default rotation facing forward
+    return sticker.rotation || [0, 0, 0]
+  }, [sticker.rotation])
+  
+  const scale = useMemo(() => {
+    return sticker.scale || 0.5
+  }, [sticker.scale])
 
   // Handle the drag/scale/rotate end event
   const handleTransformEnd = (e) => {
@@ -46,55 +34,41 @@ export function DecalSticker({ sticker, targetMesh, onSelect, isSelected, onDrag
 
   return (
     <>
-      {/* 1. The invisible mesh that TransformControls will attach to */}
+      {/* Transform control mesh */}
       <mesh
         ref={meshRef}
+        position={position}
+        rotation={rotation}
+        scale={[scale, scale, scale]}
         onClick={(e) => {
-          e.stopPropagation() // Prevent the click from creating a new decal
+          e.stopPropagation()
           onSelect(sticker.id)
         }}
         userData={{ isSticker: true, id: sticker.id }}
-        // Set the initial scale and position based on state
-        position={positionVector.toArray()}
-        scale={[sticker.scale, sticker.scale, sticker.scale]}
       >
         <boxGeometry args={[1, 1, 0.001]} />
-        <meshBasicMaterial visible={false} /> {/* Invisible transform target */}
+        <meshBasicMaterial visible={false} />
       </mesh>
 
-      {/* 2. The TransformControls Gizmo */}
+      {/* Transform controls */}
       {isSelected && (
         <TransformControls 
           ref={transformRef} 
           object={meshRef} 
-          mode="translate" // Default to translate mode
+          mode="translate"
           onMouseDown={() => onSelect(sticker.id)}
           onMouseUp={handleTransformEnd}
-          // The helper for transforming a mesh can be attached to the invisible box
-        >
-          {/* TransformControls will manage the position/rotation/scale of meshRef.current */}
-        </TransformControls>
+        />
       )}
 
-      {/* 3. The Actual Decal Projection */}
-      {/* The Decal should follow the meshRef's position, rotation, and scale */}
+      {/* Decal - simplified version */}
       <Decal
         ref={decalRef}
-        position={meshRef.current ? meshRef.current.position.toArray() : positionVector.toArray()}
-        rotation={meshRef.current ? meshRef.current.rotation.toArray().slice(0, 3) : normalVector.toArray()}
-        scale={meshRef.current ? meshRef.current.scale.x : sticker.scale} // Use scale from transform mesh
+        position={position}
+        rotation={rotation}
+        scale={scale}
         map={texture}
-        debug // Helps visualize the decal projection bounds
-      >
-        {/* We use a Decal component from drei, which handles the DecalGeometry internally */}
-        <meshPhysicalMaterial 
-          map={texture} 
-          polygonOffset 
-          polygonOffsetFactor={-4} // Critical: ensures decal renders on top of the mesh
-          transparent 
-          depthTest={false}
-        />
-      </Decal>
+      />
     </>
   )
 }

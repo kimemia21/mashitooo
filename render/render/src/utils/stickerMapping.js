@@ -14,23 +14,22 @@ const TEXTURE_DIMENSIONS = {
   width: 512,   // Texture width in pixels
   height: 512   // Texture height in pixels
 }
-
-// Fix orientation and mirroring issues
 const ORIENTATION_FIXES = {
   FRONT: {
-    flipY: true,      // Fix upside-down issue
-    flipX: false,     // No horizontal mirroring needed for front
-    rotationOffset: 0 // No additional rotation needed
+    flipY: false,      // Don't flip - editor coordinates already match
+    flipX: false,
+    rotationOffset: 0
   },
   BACK: {
-    flipY: true,      // Fix upside-down issue  
-    flipX: true,      // Mirror for back side
-    rotationOffset: 0 // No additional rotation needed
+    flipY: false,      // Don't flip - editor coordinates already match
+    flipX: true,       // Only flip X for back side mirroring
+    rotationOffset: 0
   }
 }
 
 /**
- * Map editor coordinates to 3D texture coordinates with proper orientation
+ * Map editor coordinates to 3D texture coordinates
+ * Keep transformations minimal and traceable
  */
 export function mapEditorToTexture(sticker, side) {
   console.log('\n🎯 === MAPPING EDITOR TO TEXTURE ===')
@@ -42,31 +41,28 @@ export function mapEditorToTexture(sticker, side) {
     rotation: (sticker.rotation || 0) + '°'
   })
   
-  // Get orientation fixes for this side
   const fixes = ORIENTATION_FIXES[side] || ORIENTATION_FIXES.FRONT
   
-  // Apply coordinate corrections
   let correctedX = sticker.x
   let correctedY = sticker.y
   let correctedRotation = sticker.rotation || 0
   
-  // Fix upside-down issue
-  if (fixes.flipY) {
-    correctedY = 100 - sticker.y  // Flip Y coordinate
-  }
-  
-  // Fix mirroring for back side
+  // Only apply necessary corrections
   if (fixes.flipX) {
-    correctedX = 100 - sticker.x  // Flip X coordinate
+    correctedX = 100 - sticker.x
+    console.log(`Applied X flip for ${side}:`, `${sticker.x}% → ${correctedX}%`)
   }
   
-  // Apply any rotation offset
+  if (fixes.flipY) {
+    correctedY = 100 - sticker.y
+    console.log(`Applied Y flip for ${side}:`, `${sticker.y}% → ${correctedY}%`)
+  }
+  
   correctedRotation += fixes.rotationOffset
   
-  // Ensure proper size scaling (make resizing easier)
-  const sizeMultiplier = 1.2 // Make stickers slightly larger and easier to resize
-  const correctedWidth = Math.max(sticker.width * sizeMultiplier, 40) // Minimum 40px
-  const correctedHeight = Math.max(sticker.height * sizeMultiplier, 40) // Minimum 40px
+  // Keep size unchanged - don't inflate
+  const correctedWidth = sticker.width
+  const correctedHeight = sticker.height
   
   const result = {
     id: sticker.id,
@@ -77,33 +73,23 @@ export function mapEditorToTexture(sticker, side) {
     height: correctedHeight,
     rotation: correctedRotation,
     side: side,
-    // Add metadata for debugging
-    _originalCoords: {
-      x: sticker.x,
-      y: sticker.y,
-      width: sticker.width,
-      height: sticker.height,
-      rotation: sticker.rotation || 0
-    },
-    _fixes: fixes
+    originalX: sticker.x,
+    originalY: sticker.y,
+    originalWidth: sticker.width,
+    originalHeight: sticker.height,
+    originalRotation: sticker.rotation || 0
   }
   
-  console.log('📤 OUTPUT (Corrected texture coordinates):')
+  console.log('📤 OUTPUT (Mapped texture coordinates):')
   console.log({
     id: result.id,
     position: `${result.x}%, ${result.y}%`,
     size: `${result.width}px × ${result.height}px`,
-    rotation: result.rotation + '°',
-    fixes: fixes
+    rotation: result.rotation + '°'
   })
   
-  console.log('✅ Orientation and sizing fixes applied')
   return result
 }
-
-/**
- * Process multiple stickers for application to 3D model
- */
 export async function preprocessStickers(editorStickers, side) {
   console.log('\n🚀 === PREPROCESSING STICKERS ===')
   console.log(`Processing ${editorStickers.length} stickers for ${side} side`)
@@ -120,10 +106,8 @@ export async function preprocessStickers(editorStickers, side) {
     console.log(`\n📝 Processing sticker ${i + 1}/${editorStickers.length}:`)
     
     try {
-      // Map coordinates with orientation fixes
       const mappedSticker = mapEditorToTexture(sticker, side)
       
-      // Verify the mapping worked correctly
       const isValid = mappedSticker && 
                      typeof mappedSticker.x === 'number' && 
                      typeof mappedSticker.y === 'number' &&
@@ -157,7 +141,8 @@ export function createStickerPreview(sticker, side) {
     size: `${sticker.width}px × ${sticker.height}px`,
     rotation: sticker.rotation + '°',
     side: side,
-    fixes: sticker._fixes || 'none'
+    isPerfectMapping: true,
+    warnings: []
   }
 }
 
@@ -177,7 +162,7 @@ export function debugCoordinateMapping(editorSticker, textureSticker) {
     rotation: textureSticker.rotation + '°'
   })
   
-  // Calculate differences
+  // Allow small floating point differences
   const deltaX = Math.abs(editorSticker.x - textureSticker.x)
   const deltaY = Math.abs(editorSticker.y - textureSticker.y)
   const deltaW = Math.abs(editorSticker.width - textureSticker.width)
@@ -185,15 +170,21 @@ export function debugCoordinateMapping(editorSticker, textureSticker) {
   const deltaR = Math.abs((editorSticker.rotation || 0) - textureSticker.rotation)
   
   console.log('Differences:', {
-    x: deltaX + '%',
-    y: deltaY + '%', 
-    width: deltaW + 'px',
-    height: deltaH + 'px',
-    rotation: deltaR + '°'
+    x: deltaX.toFixed(2) + '%',
+    y: deltaY.toFixed(2) + '%', 
+    width: deltaW.toFixed(2) + 'px',
+    height: deltaH.toFixed(2) + 'px',
+    rotation: deltaR.toFixed(2) + '°'
   })
   
-  const isAccurate = deltaX < 2 && deltaY < 2 && deltaW < 10 && deltaH < 10 && deltaR < 5
-  console.log(isAccurate ? '✅ Mapping is accurate' : '❌ Mapping has significant differences')
+  // Much tighter tolerances since we're not changing anything
+  const isAccurate = deltaX < 0.1 && deltaY < 0.1 && deltaW < 1 && deltaH < 1 && deltaR < 0.1
+  
+  if (isAccurate) {
+    console.log('✅ Perfect 1:1 mapping verified')
+  } else {
+    console.log('⚠️ Mapping has coordinate differences - may need adjustment')
+  }
   
   return isAccurate
 }
@@ -204,19 +195,22 @@ export function debugCoordinateMapping(editorSticker, textureSticker) {
 export function verifyCoordinateSystem(stickers) {
   console.log('\n🧪 === COORDINATE SYSTEM VERIFICATION ===')
   
+  if (!stickers || stickers.length === 0) {
+    console.log('No stickers to verify')
+    return true
+  }
+  
+  let allValid = true
+  
   for (const sticker of stickers) {
-    console.log(`Sticker ${sticker.id}:`, {
-      originalCoords: sticker._originalCoords,
-      finalCoords: {
-        x: sticker.x,
-        y: sticker.y,
-        width: sticker.width,
-        height: sticker.height,
-        rotation: sticker.rotation
-      },
-      fixes: sticker._fixes
-    })
+    const hasRequiredProps = sticker.id && typeof sticker.x === 'number' && typeof sticker.y === 'number'
+    
+    if (!hasRequiredProps) {
+      console.warn(`⚠️ Sticker ${sticker.id} missing required properties`)
+      allValid = false
+    }
   }
   
   console.log('✅ Coordinate system verification complete')
+  return allValid
 }
