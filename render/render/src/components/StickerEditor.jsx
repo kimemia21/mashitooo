@@ -74,7 +74,7 @@ useEffect(() => {
 
   const ctx = canvas.getContext("2d");
   const img = new Image();
-  img.src = "/tshirt_uv1.png"; 
+  img.src = "/tshirt_uv.png"; 
 
   img.onload = () => {
     canvas.width = tshirtDimensions.width;
@@ -262,13 +262,11 @@ useEffect(() => {
   }, [])
 
   // Add touch support
-   const handleTouchStart = (e, stickerId) => handleMouseDown(e, stickerId)
-  const handleTouchMove = useCallback((e) => {
-    if (draggedSticker) {
-      e.preventDefault()
-    }
+  const handleTouchStart = (e, stickerId) => handleMouseDown(e, stickerId)
+  const handleTouchMove = (e) => {
+    e.preventDefault()
     handleMouseMove(e)
-  }, [draggedSticker, handleMouseMove])
+  }
   const handleTouchEnd = handleMouseUp
 
   // Event listeners

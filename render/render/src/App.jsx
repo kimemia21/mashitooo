@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react'
-import { Menu, X, RotateCcw, Home, Maximize2, Eye, Layers } from 'lucide-react'
+import { Menu, X, RotateCcw, Home } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, Center } from '@react-three/drei'
 import * as THREE from 'three'
-import TShirtModel from './components/TShirtModel'
+import Model from './components/Model'
 import ModernBackground from './components/ModernBackground'
 import ColorPicker from './components/ColorPicker'
 import StickerPicker from './components/StickerPicker'
@@ -16,194 +16,6 @@ import './styles/simple-mobile.css'
 import { useResponsive } from './hooks/useResponsive'
 import Panel from './components/Panel'
 import IconButton from './components/IconButton'
-
-// View Controls Component for quick view switching
-function ViewControls({ onViewChange, onReset, currentView }) {
-  const views = [
-    { name: 'front', label: 'Front', key: '1', icon: '👕' },
-    { name: 'back', label: 'Back', key: '2', icon: '🔙' },
-    { name: 'left', label: 'Left', key: '3', icon: '⬅️' },
-    { name: 'right', label: 'Right', key: '4', icon: '➡️' },
-  ]
-
-  return (
-    <div style={{
-      display: 'flex',
-      gap: '8px',
-      padding: '12px',
-      background: 'rgba(42, 42, 42, 0.95)',
-      borderRadius: '12px',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.3)'
-    }}>
-      {views.map(view => (
-        <button
-          key={view.name}
-          onClick={() => {
-            if (window.tshirtModelControls) {
-              window.tshirtModelControls[`snapTo${view.name.charAt(0).toUpperCase() + view.name.slice(1)}`]()
-            }
-          }}
-          className={`btn ${currentView === view.name ? 'primary' : 'secondary'}`}
-          style={{
-            padding: '8px 16px',
-            fontSize: '13px',
-            minWidth: '70px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px',
-            transition: 'all 0.2s ease'
-          }}
-        >
-          <span>{view.icon}</span>
-          {view.label}
-          <span style={{ 
-            opacity: 0.5, 
-            fontSize: '11px', 
-            marginLeft: '2px' 
-          }}>
-            {view.key}
-          </span>
-        </button>
-      ))}
-      <button
-        onClick={onReset}
-        className="btn secondary"
-        style={{
-          padding: '8px 16px',
-          fontSize: '13px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px'
-        }}
-      >
-        <Home size={14} />
-        Reset
-      </button>
-    </div>
-  )
-}
-
-// Keyboard Shortcuts Overlay
-function KeyboardShortcuts({ show }) {
-  if (!show) return null
-  
-  return (
-    <div style={{
-      position: 'absolute',
-      bottom: '80px',
-      right: '20px',
-      zIndex: 100,
-      background: 'rgba(42, 42, 42, 0.95)',
-      padding: '16px',
-      borderRadius: '8px',
-      fontSize: '12px',
-      color: '#d5d5d5',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-      maxWidth: '220px',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.3)'
-    }}>
-      <div style={{ fontWeight: 'bold', marginBottom: '12px', fontSize: '13px' }}>
-        ⌨️ Keyboard Shortcuts
-      </div>
-      <div style={{ display: 'grid', gap: '6px', lineHeight: '1.5' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ opacity: 0.7 }}>1-4</span>
-          <span>Quick views</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ opacity: 0.7 }}>Arrows</span>
-          <span>Rotate</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ opacity: 0.7 }}>+/-</span>
-          <span>Zoom in/out</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ opacity: 0.7 }}>R</span>
-          <span>Reset view</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ opacity: 0.7 }}>Scroll</span>
-          <span>Zoom</span>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ opacity: 0.7 }}>Drag</span>
-          <span>Rotate model</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Mobile Gesture Help Overlay
-function MobileGestureHelp({ show }) {
-  if (!show) return null
-  
-  return (
-    <div style={{
-      position: 'fixed',
-      top: '70px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 100,
-      background: 'rgba(42, 42, 42, 0.95)',
-      padding: '10px 20px',
-      borderRadius: '20px',
-      fontSize: '11px',
-      color: '#d5d5d5',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-      whiteSpace: 'nowrap',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-      maxWidth: '90vw',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis'
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
-        <span>👆 Drag to rotate</span>
-        <span>•</span>
-        <span>🤏 Pinch to zoom</span>
-        <span>•</span>
-        <span>👆👆 Double tap reset</span>
-      </div>
-    </div>
-  )
-}
-
-// Zoom Level Indicator
-function ZoomIndicator({ zoom, show }) {
-  if (!show) return null
-  
-  const percentage = Math.round(zoom * 100)
-  
-  return (
-    <div style={{
-      position: 'absolute',
-      top: '20px',
-      right: '20px',
-      zIndex: 100,
-      background: 'rgba(42, 42, 42, 0.95)',
-      padding: '8px 16px',
-      borderRadius: '20px',
-      fontSize: '12px',
-      color: '#d5d5d5',
-      backdropFilter: 'blur(10px)',
-      border: '1px solid rgba(255, 255, 255, 0.1)',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '8px',
-      boxShadow: '0 4px 24px rgba(0,0,0,0.3)',
-      transition: 'opacity 0.3s ease',
-      opacity: 0.8
-    }}>
-      <Maximize2 size={14} />
-      <span style={{ fontWeight: 'bold' }}>{percentage}%</span>
-    </div>
-  )
-}
 
 function App() {
   // Core application state
@@ -221,60 +33,12 @@ function App() {
   const [selectedSticker, setSelectedSticker] = useState(null)
   const [isApplying, setIsApplying] = useState(false)
   
-  // 3D View state
-  const [currentView, setCurrentView] = useState('front')
-  const [modelRotation, setModelRotation] = useState({ x: 0, y: 0 })
-  const [modelZoom, setModelZoom] = useState(1)
-  const [showKeyboardHelp, setShowKeyboardHelp] = useState(true)
-  const [showGestureHelp, setShowGestureHelp] = useState(true)
-  const [showZoomIndicator, setShowZoomIndicator] = useState(false)
-  
   const controlsRef = useRef()
-  const zoomTimeoutRef = useRef(null)
   const { isMobile, isTablet, isDesktop } = useResponsive()
   
   // UI state for mobile
   const [leftPanelOpen, setLeftPanelOpen] = useState(false)
   const [rightPanelOpen, setRightPanelOpen] = useState(false)
-
-  // Hide help overlays after a few seconds
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowKeyboardHelp(false)
-      setShowGestureHelp(false)
-    }, 5000)
-    return () => clearTimeout(timer)
-  }, [])
-
-  // Handle model rotation changes
-  const handleModelRotationChange = (rot) => {
-    setModelRotation(rot)
-    // Detect which view we're closest to
-    const normalizedY = ((rot.y % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
-    if (normalizedY < Math.PI / 4 || normalizedY > (7 * Math.PI / 4)) {
-      setCurrentView('front')
-    } else if (normalizedY > (3 * Math.PI / 4) && normalizedY < (5 * Math.PI / 4)) {
-      setCurrentView('back')
-    } else if (normalizedY > (Math.PI / 4) && normalizedY < (3 * Math.PI / 4)) {
-      setCurrentView('right')
-    } else {
-      setCurrentView('left')
-    }
-  }
-
-  // Handle zoom indicator display
-  const handleZoomChange = (zoom) => {
-    setModelZoom(zoom)
-    setShowZoomIndicator(true)
-    
-    if (zoomTimeoutRef.current) {
-      clearTimeout(zoomTimeoutRef.current)
-    }
-    
-    zoomTimeoutRef.current = setTimeout(() => {
-      setShowZoomIndicator(false)
-    }, 1500)
-  }
 
   // Handle entering edit mode
   const handleEditMode = () => {
@@ -288,7 +52,7 @@ function App() {
     const sideStickers = stickers.filter(s => s.side === side)
     setEditorStickers(sideStickers.map(s => ({
       ...s,
-      x: s.editorX || 50,
+      x: s.editorX || 50, // Default to center if no editor position
       y: s.editorY || 50,
       width: s.editorWidth || 100,
       height: s.editorHeight || 100,
@@ -302,9 +66,9 @@ function App() {
       id: Date.now(),
       url: sticker.url,
       name: sticker.name,
-      x: 50,
+      x: 50, // Center position (percentage)
       y: 50,
-      width: 100,
+      width: 100, // Size in pixels
       height: 100,
       rotation: 0,
       side: editSide
@@ -333,17 +97,21 @@ function App() {
     }
   }
 
-  // Apply 2D editor changes to 3D model
+  // Apply 2D editor changes to 3D model with PERFECT 1:1 coordinate mapping
   const handleApplyChanges = async () => {
     setIsApplying(true)
     
     try {
+      // Verify coordinate system first
       verifyCoordinateSystem(editorStickers)
+      
+      // Remove old stickers for this side
       const otherSideStickers = stickers.filter(s => s.side !== editSide)
       
       console.log(`\n🎯 === APPLYING ${editSide} SIDE STICKERS ===`)
       console.log(`Processing ${editorStickers.length} stickers from 2D editor...`)
       
+      // Log all editor stickers with their exact coordinates
       editorStickers.forEach((sticker, index) => {
         console.log(`Editor Sticker ${index + 1}: "${sticker.name}"`, {
           position: `${sticker.x}%, ${sticker.y}%`,
@@ -352,9 +120,11 @@ function App() {
         })
       })
       
+      // Process stickers with PERFECT coordinate preservation
       console.log('\n🔄 Processing coordinates...')
       const processedStickers = await preprocessStickers(editorStickers, editSide)
       
+      // Verify each sticker mapping
       let allMappingsPerfect = true
       processedStickers.forEach((processed, index) => {
         const original = editorStickers[index]
@@ -381,14 +151,17 @@ function App() {
         console.log('✅ ALL COORDINATE MAPPINGS VERIFIED PERFECT!')
       }
       
+      // Create final stickers with EXACT coordinates
       const finalStickers = processedStickers.map(sticker => ({
         ...sticker,
         side: editSide,
+        // Store original editor data for verification
         editorX: sticker.originalX,
         editorY: sticker.originalY,
         editorWidth: sticker.originalWidth,
         editorHeight: sticker.originalHeight,
         editorRotation: sticker.originalRotation,
+        // Processing metadata
         processed: true,
         appliedAt: new Date().toISOString(),
         mappingVerified: allMappingsPerfect
@@ -404,9 +177,11 @@ function App() {
         })
       })
       
+      // Simulate processing time for texture generation
       console.log('\n⏳ Generating 3D texture...')
       await new Promise(resolve => setTimeout(resolve, 1200))
       
+      // Apply to state
       setStickers([...otherSideStickers, ...finalStickers])
       
       console.log(`\n✅ SUCCESSFULLY APPLIED ${finalStickers.length} STICKERS TO ${editSide} SIDE`)
@@ -435,10 +210,9 @@ function App() {
 
   // Reset camera view
   const handleResetView = () => {
-    if (window.tshirtModelControls) {
-      window.tshirtModelControls.reset()
+    if (controlsRef.current) {
+      controlsRef.current.reset()
     }
-    setModelZoom(1)
   }
 
   return (
@@ -488,24 +262,46 @@ function App() {
             {/* Modern Background */}
             <ModernBackground />
             
-            {/* Enhanced T-Shirt Model with Advanced Controls */}
+            {/* Model-only rotation controls */}
+            <OrbitControls 
+              ref={controlsRef}
+              enablePan={true}
+              enableZoom={true}
+              enableRotate={true}
+              minDistance={2}
+              maxDistance={10}
+              enableDamping={true}
+              dampingFactor={0.05}
+              rotateSpeed={1.0}
+              zoomSpeed={1.0}
+              panSpeed={0.8}
+              target={[0, 0, 0]}
+              makeDefault
+              touches={{
+                ONE: 2,  // ROTATE
+                TWO: 1   // DOLLY_PAN
+              }}
+              mouseButtons={{
+                LEFT: 0,   // ROTATE
+                MIDDLE: 1, // DOLLY
+                RIGHT: 2   // PAN
+              }}
+            />
+            
             <Center>
-              <TShirtModel
+              <Model
                 color={tshirtColor}
                 stickers={stickers}
                 viewMode="rendered"
-                enableAdvancedControls={true}
-                onRotationChange={handleModelRotationChange}
-                selectedSticker={selectedSticker}
-                onStickerSelect={setSelectedSticker}
-                onStickerUpdate={handleStickerUpdate}
+                backgroundImage="/urbanfusion-africanwomangraffitiillustration_882186-30433.jpg"
+                
+                
               />
             </Center>
           </Canvas>
 
-          {/* Zoom Level Indicator */}
-          <ZoomIndicator zoom={modelZoom} show={showZoomIndicator} />
-
+          {/* UI Controls Layout - Proper Z-index and positioning */}
+          
           {/* Mobile Menu Button */}
           {isMobile && (
             <div style={{
@@ -588,29 +384,6 @@ function App() {
             </div>
           )}
 
-          {/* Desktop View Controls */}
-          {!isMobile && (
-            <div style={{
-              position: 'absolute',
-              top: '20px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              zIndex: 200
-            }}>
-              <ViewControls 
-                currentView={currentView}
-                onViewChange={setCurrentView}
-                onReset={handleResetView}
-              />
-            </div>
-          )}
-
-          {/* Keyboard Shortcuts Help */}
-          {!isMobile && <KeyboardShortcuts show={showKeyboardHelp} />}
-
-          {/* Mobile Gesture Help */}
-          {isMobile && <MobileGestureHelp show={showGestureHelp} />}
-
           {/* Floating Action Buttons - Mobile */}
           {isMobile && (
             <>
@@ -631,9 +404,13 @@ function App() {
                   size={20}
                 />
                 <IconButton
-                  icon={Eye}
-                  onClick={() => setShowGestureHelp(!showGestureHelp)}
-                  tooltip="Toggle Help"
+                  icon={RotateCcw}
+                  onClick={() => {
+                    if (controlsRef.current) {
+                      controlsRef.current.autoRotate = !controlsRef.current.autoRotate
+                    }
+                  }}
+                  tooltip="Auto Rotate"
                   size={20}
                 />
               </div>
@@ -653,14 +430,10 @@ function App() {
                     padding: '16px 32px',
                     fontSize: '16px',
                     borderRadius: '24px',
-                    boxShadow: 'var(--glow)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
+                    boxShadow: 'var(--glow)'
                   }}
                 >
-                  <Layers size={20} />
-                  Edit Design
+                  ✨ Edit Design
                 </button>
               </div>
             </>
@@ -683,14 +456,10 @@ function App() {
                 className="btn primary"
                 style={{
                   padding: '12px 24px',
-                  fontSize: '14px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px'
+                  fontSize: '14px'
                 }}
               >
-                <Layers size={18} />
-                Edit Design
+                ✨ Edit Design
               </button>
 
               <IconButton
@@ -701,9 +470,13 @@ function App() {
               />
               
               <IconButton
-                icon={Eye}
-                onClick={() => setShowKeyboardHelp(!showKeyboardHelp)}
-                tooltip="Toggle Shortcuts"
+                icon={RotateCcw}
+                onClick={() => {
+                  if (controlsRef.current) {
+                    controlsRef.current.autoRotate = !controlsRef.current.autoRotate
+                  }
+                }}
+                tooltip="Auto Rotate"
                 size={18}
               />
             </div>
@@ -748,7 +521,7 @@ function App() {
           border: '1px solid #1a1a1a',
           color: '#d5d5d5',
           padding: 'clamp(16px, 4vw, 24px) clamp(24px, 6vw, 40px)',
-          borderRadius: '8px',
+          borderRadius: '4px',
           fontSize: 'clamp(13px, 3.2vw, 14px)',
           zIndex: 3000,
           maxWidth: '90vw',
@@ -777,30 +550,18 @@ function App() {
 
         /* Mobile responsive adjustments */
         @media (max-width: 768px) {
+          /* Ensure buttons don't overlap on small screens */
           body {
             -webkit-tap-highlight-color: transparent;
           }
         }
 
         @media (max-width: 480px) {
+          /* Stack buttons vertically on very small screens */
           .button-group {
             flex-direction: column !important;
             width: 100%;
           }
-        }
-
-        /* Smooth transitions for all interactive elements */
-        .btn {
-          transition: all 0.2s ease;
-        }
-
-        .btn:hover {
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn:active {
-          transform: translateY(0);
         }
       `}</style>
     </div>
