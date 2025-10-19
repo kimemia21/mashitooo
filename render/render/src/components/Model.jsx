@@ -5,7 +5,7 @@ import * as THREE from 'three'
 
 /**
  * Urban Custom T-Shirt Shop Editor with Graffiti Walls
- * Street art aesthetic with black & neon green color scheme
+ * Street art aesthetic - focus on model
  */
 function Model({ 
   color = '#ffffff', 
@@ -20,10 +20,10 @@ function Model({
   
   // Enhanced camera state with smoother interpolation
   const cameraState = useRef({
-    radius: 5,
+    radius: 4,
     theta: 0,
     phi: Math.PI / 2,
-    targetRadius: 5,
+    targetRadius: 4,
     targetTheta: 0,
     targetPhi: Math.PI / 2,
     velocity: { theta: 0, phi: 0 },
@@ -60,12 +60,10 @@ function Model({
   const wallTextures = useMemo(() => {
     const textureLoader = new THREE.TextureLoader()
     
-    // High-quality graffiti wall images
-
-   const backWallUrl = '/91PsUlxfRJL._AC_SL1500_.jpg'
-    const leftWallUrl = '/ObeyGiant_Vhils-1.jpg'
-    const rightWallUrl = '/graffiti-and-street-art-decorations.jpg'
-    
+    const backWallUrl = '/sample1.jpg'
+    const leftWallUrl = '/wall2.jpg'
+    const rightWallUrl = '/wall1.jpg'
+    const floorUrl = '/wp5250282.jpg'
     
     const loadTexture = (url) => {
       const texture = textureLoader.load(
@@ -76,8 +74,8 @@ function Model({
           console.error('Error loading texture:', error)
         }
       )
-      texture.wrapS = THREE.ClampToEdgeWrapping
-      texture.wrapT = THREE.ClampToEdgeWrapping
+      texture.wrapS = THREE.RepeatWrapping
+      texture.wrapT = THREE.RepeatWrapping
       texture.minFilter = THREE.LinearMipmapLinearFilter
       texture.magFilter = THREE.LinearFilter
       texture.anisotropy = gl.capabilities.getMaxAnisotropy()
@@ -87,7 +85,8 @@ function Model({
     return {
       back: loadTexture(backWallUrl),
       left: loadTexture(leftWallUrl),
-      right: loadTexture(rightWallUrl)
+      right: loadTexture(rightWallUrl),
+      floor: loadTexture(floorUrl)
     }
   }, [gl])
 
@@ -144,7 +143,7 @@ function Model({
       map: fabricTexture,
       toneMapped: true,
       normalScale: new THREE.Vector2(0.3, 0.3),
-      envMapIntensity: 0.4
+      envMapIntensity: 0.5
     })
 
     if (viewMode === 'wireframe') {
@@ -233,7 +232,7 @@ function Model({
         
         if (ctrl.lastDistance > 0) {
           const delta = (distance - ctrl.lastDistance) * 0.02
-          state.targetRadius = Math.max(2.5, Math.min(15, state.targetRadius - delta))
+          state.targetRadius = Math.max(2, Math.min(10, state.targetRadius - delta))
         }
         
         ctrl.lastDistance = distance
@@ -274,7 +273,7 @@ function Model({
       const state = cameraState.current
       
       const zoomDelta = e.deltaY * 0.004
-      state.targetRadius = Math.max(2.5, Math.min(15, state.targetRadius + zoomDelta))
+      state.targetRadius = Math.max(2, Math.min(10, state.targetRadius + zoomDelta))
     }
 
     const handleKeyDown = (e) => {
@@ -297,14 +296,14 @@ function Model({
         case '1':
           state.targetTheta = 0
           state.targetPhi = Math.PI / 2
-          state.targetRadius = 5
+          state.targetRadius = 4
           break
         case '+':
         case '=':
-          state.targetRadius = Math.max(2.5, state.targetRadius - 0.5)
+          state.targetRadius = Math.max(2, state.targetRadius - 0.5)
           break
         case '-':
-          state.targetRadius = Math.min(15, state.targetRadius + 0.5)
+          state.targetRadius = Math.min(10, state.targetRadius + 0.5)
           break
         default:
           break
@@ -347,10 +346,10 @@ function Model({
   if (error || !nodes) {
     return (
       <>
-        <color attach="background" args={['#000000']} />
-        <ambientLight intensity={0.3} color="#00ff41" />
-        <directionalLight position={[5, 10, 5]} intensity={1.5} color="#00ff41" castShadow />
-        <pointLight position={[0, 5, 5]} intensity={2} color="#00ff41" />
+        <color attach="background" args={['#1a1a1a']} />
+        <ambientLight intensity={0.5} color="#ffffff" />
+        <directionalLight position={[5, 10, 5]} intensity={1.2} color="#ffffff" castShadow />
+        <pointLight position={[0, 5, 5]} intensity={1} color="#ffffff" />
         
         <Environment preset="night" />
         
@@ -358,7 +357,7 @@ function Model({
         <mesh position={[0, 0, -8]} receiveShadow>
           <planeGeometry args={[25, 15]} />
           <meshStandardMaterial 
-            color="#1a1a1a"
+            color="#2a2a2a"
             roughness={0.9}
             metalness={0.1}
           />
@@ -368,7 +367,7 @@ function Model({
         <mesh position={[-8, 0, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
           <planeGeometry args={[16, 15]} />
           <meshStandardMaterial 
-            color="#1a1a1a"
+            color="#2a2a2a"
             roughness={0.9}
             metalness={0.1}
           />
@@ -378,13 +377,13 @@ function Model({
         <mesh position={[8, 0, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
           <planeGeometry args={[16, 15]} />
           <meshStandardMaterial 
-            color="#1a1a1a"
+            color="#2a2a2a"
             roughness={0.9}
             metalness={0.1}
           />
         </mesh>
         
-        {/* Concrete Floor */}
+        {/* Floor */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
           <planeGeometry args={[25, 16]} />
           <meshStandardMaterial 
@@ -410,17 +409,17 @@ function Model({
 
   return (
     <>
-      {/* Black background like a custom shop */}
-      <color attach="background" args={['#000000']} />
+      {/* Dark background */}
+      <color attach="background" args={['#1a1a1a']} />
       
-      {/* Neon green ambient lighting */}
-      <ambientLight intensity={0.3} color="#00ff41" />
+      {/* Soft white ambient lighting */}
+      <ambientLight intensity={0.5} color="#ffffff" />
       
-      {/* Main key light with neon green tint */}
+      {/* Main key light */}
       <directionalLight
         position={[5, 10, 5]}
-        intensity={1.5}
-        color="#00ff41"
+        intensity={1.2}
+        color="#ffffff"
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
@@ -438,18 +437,18 @@ function Model({
         color="#ffffff"
       />
       
-      {/* Neon accent lights */}
-      <pointLight position={[0, 5, 5]} intensity={2} color="#00ff41" />
-      <pointLight position={[-5, 3, -5]} intensity={1.5} color="#00ff41" />
-      <pointLight position={[5, 3, -5]} intensity={1.5} color="#00ff41" />
+      {/* Accent lights - subtle white */}
+      <pointLight position={[0, 5, 5]} intensity={0.8} color="#ffffff" />
+      <pointLight position={[-5, 3, -5]} intensity={0.6} color="#ffffff" />
+      <pointLight position={[5, 3, -5]} intensity={0.6} color="#ffffff" />
       
-      {/* Rim lighting for drama */}
+      {/* Rim lighting */}
       <spotLight
         position={[0, 8, -6]}
-        intensity={2}
+        intensity={1}
         angle={0.6}
         penumbra={1}
-        color="#00ff41"
+        color="#ffffff"
         castShadow
       />
       
@@ -485,17 +484,17 @@ function Model({
         />
       </mesh>
       
-      {/* Concrete Floor (replacing the grid) */}
+      {/* Floor with Image Texture */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
         <planeGeometry args={[25, 16]} />
         <meshStandardMaterial 
-          color="#1a1a1a"
+          map={wallTextures.floor}
           roughness={0.8}
           metalness={0.1}
         />
       </mesh>
       
-      {/* Main T-Shirt Model */}
+      {/* Main T-Shirt Model - Focus Point */}
       <group ref={group} dispose={null}>
         {Object.entries(nodes).map(([name, node]) => 
           node.isMesh && node.geometry ? (
@@ -520,5 +519,3 @@ function Model({
 useGLTF.preload('/models/oversized_t-shirt.glb')
 
 export default Model
-
-
