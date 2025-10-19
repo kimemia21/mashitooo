@@ -4,10 +4,8 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 /**
- * Enhanced TShirtModel with professional editor-like controls
- * Improvements: Better typography handling, smoother animations, enhanced visual feedback
- * Time Complexity: O(n) where n = number of stickers (one-time canvas render)
- * Space Complexity: O(1) for textures (cached and reused)
+ * Urban Custom T-Shirt Shop Editor with Graffiti Walls
+ * Street art aesthetic with black & neon green color scheme
  */
 function Model({ 
   color = '#ffffff', 
@@ -29,7 +27,7 @@ function Model({
     targetTheta: 0,
     targetPhi: Math.PI / 2,
     velocity: { theta: 0, phi: 0 },
-    damping: 0.15 // Smoother camera movement
+    damping: 0.15
   })
   
   const controlState = useRef({
@@ -43,7 +41,6 @@ function Model({
     deltaY: 0
   })
 
-  // Enhanced texture cache with better memory management
   const textureCache = useRef(new Map())
   const [, forceUpdate] = useState()
   const [isLoading, setIsLoading] = useState(true)
@@ -59,7 +56,42 @@ function Model({
     console.error('Model loading error:', e)
   }
 
-  // Enhanced fabric texture with better quality
+  // Load graffiti wall textures from images
+  const wallTextures = useMemo(() => {
+    const textureLoader = new THREE.TextureLoader()
+    
+    // High-quality graffiti wall images
+
+   const backWallUrl = '/91PsUlxfRJL._AC_SL1500_.jpg'
+    const leftWallUrl = '/ObeyGiant_Vhils-1.jpg'
+    const rightWallUrl = '/graffiti-and-street-art-decorations.jpg'
+    
+    
+    const loadTexture = (url) => {
+      const texture = textureLoader.load(
+        url,
+        undefined,
+        undefined,
+        (error) => {
+          console.error('Error loading texture:', error)
+        }
+      )
+      texture.wrapS = THREE.ClampToEdgeWrapping
+      texture.wrapT = THREE.ClampToEdgeWrapping
+      texture.minFilter = THREE.LinearMipmapLinearFilter
+      texture.magFilter = THREE.LinearFilter
+      texture.anisotropy = gl.capabilities.getMaxAnisotropy()
+      return texture
+    }
+    
+    return {
+      back: loadTexture(backWallUrl),
+      left: loadTexture(leftWallUrl),
+      right: loadTexture(rightWallUrl)
+    }
+  }, [gl])
+
+  // Enhanced fabric texture
   const fabricTexture = useMemo(() => {
     const cacheKey = `fabric_${color}`
     if (textureCache.current.has(cacheKey)) {
@@ -67,17 +99,14 @@ function Model({
     }
 
     const canvas = document.createElement('canvas')
-    // Higher resolution for better quality
     canvas.width = 2048
     canvas.height = 2560
     const ctx = canvas.getContext('2d', { alpha: false })
     
-    // Base color
     ctx.fillStyle = color
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     
-    // Enhanced fabric texture with multiple layers
-    // Layer 1: Fine grain
+    // Fabric texture
     ctx.fillStyle = 'rgba(0, 0, 0, 0.015)'
     for (let i = 0; i < canvas.width; i += 2) {
       for (let j = 0; j < canvas.height; j += 2) {
@@ -87,22 +116,12 @@ function Model({
       }
     }
     
-    // Layer 2: Subtle weave pattern
     ctx.fillStyle = 'rgba(0, 0, 0, 0.008)'
     for (let i = 0; i < canvas.width; i += 4) {
       ctx.fillRect(i, 0, 1, canvas.height)
     }
     for (let j = 0; j < canvas.height; j += 4) {
       ctx.fillRect(0, j, canvas.width, 1)
-    }
-    
-    // Layer 3: Fabric noise for realism
-    ctx.globalAlpha = 0.02
-    for (let i = 0; i < 1000; i++) {
-      const x = Math.random() * canvas.width
-      const y = Math.random() * canvas.height
-      const size = Math.random() * 3
-      ctx.fillRect(x, y, size, size)
     }
 
     const texture = new THREE.CanvasTexture(canvas)
@@ -111,22 +130,21 @@ function Model({
     texture.flipY = false
     texture.minFilter = THREE.LinearMipmapLinearFilter
     texture.magFilter = THREE.LinearFilter
-    texture.anisotropy = gl.capabilities.getMaxAnisotropy() // Better texture quality
+    texture.anisotropy = gl.capabilities.getMaxAnisotropy()
     
     textureCache.current.set(cacheKey, texture)
     return texture
   }, [color, gl])
 
-  // Enhanced material with better lighting response
   const compositeMaterial = useMemo(() => {
     const material = new THREE.MeshStandardMaterial({
       color: color,
-      roughness: 0.7, // Slightly more matte for fabric
+      roughness: 0.7,
       metalness: 0.02,
       map: fabricTexture,
       toneMapped: true,
-      normalScale: new THREE.Vector2(0.3, 0.3), // Subtle normal mapping effect
-      envMapIntensity: 0.4 // Better environment reflection
+      normalScale: new THREE.Vector2(0.3, 0.3),
+      envMapIntensity: 0.4
     })
 
     if (viewMode === 'wireframe') {
@@ -139,11 +157,9 @@ function Model({
     return material
   }, [color, viewMode, fabricTexture])
 
-  // Enhanced camera controls with smooth damping
   const updateCamera = useCallback(() => {
     const state = cameraState.current
     
-    // Smooth interpolation for camera movement
     state.radius += (state.targetRadius - state.radius) * state.damping
     state.theta += (state.targetTheta - state.theta) * state.damping
     state.phi += (state.targetPhi - state.phi) * state.damping
@@ -164,7 +180,6 @@ function Model({
     }
   }, [camera, onRotationChange])
 
-  // Main touch/mouse control handler
   useEffect(() => {
     if (!enableAdvancedControls) return
     
@@ -173,13 +188,11 @@ function Model({
 
     const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0
 
-    // Helper to get touch position
     const getTouchPos = (touch) => ({
       x: touch.clientX,
       y: touch.clientY
     })
 
-    // Helper to calculate distance between two touches
     const getTouchDistance = (touch1, touch2) => {
       const dx = touch2.clientX - touch1.clientX
       const dy = touch2.clientY - touch1.clientY
@@ -190,7 +203,6 @@ function Model({
       const ctrl = controlState.current
       const state = cameraState.current
       
-      // Handle both mouse and touch
       const pos = e.touches ? getTouchPos(e.touches[0]) : { x: e.clientX, y: e.clientY }
       
       ctrl.isInteracting = true
@@ -199,12 +211,10 @@ function Model({
       ctrl.lastTouchTime = Date.now()
       ctrl.isTouchPinch = false
       
-      // Sync targets with current position for smooth start
       state.targetTheta = state.theta
       state.targetPhi = state.phi
       state.targetRadius = state.radius
       
-      // Haptic feedback on touch devices
       if (isTouch && navigator.vibrate) {
         navigator.vibrate(10)
       }
@@ -216,7 +226,6 @@ function Model({
       
       if (!ctrl.isInteracting) return
       
-      // Handle two-finger pinch zoom (takes priority)
       if (e.touches && e.touches.length === 2) {
         e.preventDefault()
         
@@ -232,7 +241,6 @@ function Model({
         return
       }
 
-      // Single touch/mouse drag for rotation
       if (ctrl.isTouchPinch) {
         ctrl.lastDistance = 0
         ctrl.isTouchPinch = false
@@ -242,13 +250,11 @@ function Model({
       
       const pos = e.touches ? getTouchPos(e.touches[0]) : { x: e.clientX, y: e.clientY }
       
-      // Adjust sensitivity for touch vs mouse
       const sensitivity = isTouch ? 0.012 : 0.008
       
       const deltaX = (pos.x - ctrl.lastX) * sensitivity
       const deltaY = (pos.y - ctrl.lastY) * sensitivity
       
-      // Update target positions for smooth damping
       state.targetTheta -= deltaX
       state.targetPhi = Math.max(0.2, Math.min(Math.PI - 0.2, state.targetPhi + deltaY))
       
@@ -267,7 +273,6 @@ function Model({
       e.preventDefault()
       const state = cameraState.current
       
-      // Enhanced zoom with better feel
       const zoomDelta = e.deltaY * 0.004
       state.targetRadius = Math.max(2.5, Math.min(15, state.targetRadius + zoomDelta))
     }
@@ -306,7 +311,6 @@ function Model({
       }
     }
 
-    // Register event listeners with proper passive flags
     canvas.addEventListener('mousedown', handlePointerDown, { passive: true })
     canvas.addEventListener('mousemove', handlePointerMove, { passive: false })
     canvas.addEventListener('mouseup', handlePointerUp, { passive: true })
@@ -336,65 +340,185 @@ function Model({
     }
   }, [enableAdvancedControls, gl])
 
-  // Smooth camera update per frame
   useFrame(() => {
     updateCamera()
   })
 
-  // Enhanced fallback with loading state
-  if (error) {
+  if (error || !nodes) {
     return (
-      <group ref={group}>
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={[2.2, 2.8, 0.12]} />
+      <>
+        <color attach="background" args={['#000000']} />
+        <ambientLight intensity={0.3} color="#00ff41" />
+        <directionalLight position={[5, 10, 5]} intensity={1.5} color="#00ff41" castShadow />
+        <pointLight position={[0, 5, 5]} intensity={2} color="#00ff41" />
+        
+        <Environment preset="night" />
+        
+        {/* Back Wall */}
+        <mesh position={[0, 0, -8]} receiveShadow>
+          <planeGeometry args={[25, 15]} />
           <meshStandardMaterial 
-            color="#ff6b6b" 
-            roughness={0.7}
+            color="#1a1a1a"
+            roughness={0.9}
             metalness={0.1}
           />
         </mesh>
-      </group>
-    )
-  }
-
-  if (!nodes) {
-    return (
-      <group ref={group}>
-        <mesh castShadow receiveShadow>
-          <boxGeometry args={[2.2, 2.8, 0.12]} />
+        
+        {/* Left Wall */}
+        <mesh position={[-8, 0, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+          <planeGeometry args={[16, 15]} />
           <meshStandardMaterial 
-            color={color}
-            roughness={0.7}
-            metalness={0.02}
-            opacity={0.5}
-            transparent
+            color="#1a1a1a"
+            roughness={0.9}
+            metalness={0.1}
           />
         </mesh>
-      </group>
+        
+        {/* Right Wall */}
+        <mesh position={[8, 0, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+          <planeGeometry args={[16, 15]} />
+          <meshStandardMaterial 
+            color="#1a1a1a"
+            roughness={0.9}
+            metalness={0.1}
+          />
+        </mesh>
+        
+        {/* Concrete Floor */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
+          <planeGeometry args={[25, 16]} />
+          <meshStandardMaterial 
+            color="#1a1a1a"
+            roughness={0.8}
+            metalness={0.1}
+          />
+        </mesh>
+        
+        <group ref={group}>
+          <mesh castShadow receiveShadow>
+            <boxGeometry args={[2.2, 2.8, 0.12]} />
+            <meshStandardMaterial 
+              color={error ? "#ff6b6b" : color}
+              roughness={0.7}
+              metalness={0.1}
+            />
+          </mesh>
+        </group>
+      </>
     )
   }
 
   return (
-    <group ref={group} dispose={null}>
-      {Object.entries(nodes).map(([name, node]) => 
-        node.isMesh && node.geometry ? (
-          <mesh
-            key={name}
-            ref={name.includes('hirt') ? meshRef : undefined}
-            geometry={node.geometry}
-            material={compositeMaterial}
-            position={node.position}
-            rotation={node.rotation}
-            scale={node.scale}
-            castShadow
-            receiveShadow
-          />
-        ) : null
-      )}
-    </group>
+    <>
+      {/* Black background like a custom shop */}
+      <color attach="background" args={['#000000']} />
+      
+      {/* Neon green ambient lighting */}
+      <ambientLight intensity={0.3} color="#00ff41" />
+      
+      {/* Main key light with neon green tint */}
+      <directionalLight
+        position={[5, 10, 5]}
+        intensity={1.5}
+        color="#00ff41"
+        castShadow
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-far={50}
+        shadow-camera-left={-10}
+        shadow-camera-right={10}
+        shadow-camera-top={10}
+        shadow-camera-bottom={-10}
+      />
+      
+      {/* Fill light */}
+      <directionalLight
+        position={[-5, 5, -5]}
+        intensity={0.6}
+        color="#ffffff"
+      />
+      
+      {/* Neon accent lights */}
+      <pointLight position={[0, 5, 5]} intensity={2} color="#00ff41" />
+      <pointLight position={[-5, 3, -5]} intensity={1.5} color="#00ff41" />
+      <pointLight position={[5, 3, -5]} intensity={1.5} color="#00ff41" />
+      
+      {/* Rim lighting for drama */}
+      <spotLight
+        position={[0, 8, -6]}
+        intensity={2}
+        angle={0.6}
+        penumbra={1}
+        color="#00ff41"
+        castShadow
+      />
+      
+      <Environment preset="night" />
+      
+      {/* Back Wall with Graffiti Image */}
+      <mesh position={[0, 0, -8]} receiveShadow>
+        <planeGeometry args={[25, 15]} />
+        <meshStandardMaterial 
+          map={wallTextures.back}
+          roughness={0.9}
+          metalness={0.1}
+        />
+      </mesh>
+      
+      {/* Left Wall with Graffiti Image */}
+      <mesh position={[-8, 0, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
+        <planeGeometry args={[16, 15]} />
+        <meshStandardMaterial 
+          map={wallTextures.left}
+          roughness={0.9}
+          metalness={0.1}
+        />
+      </mesh>
+      
+      {/* Right Wall with Graffiti Image */}
+      <mesh position={[8, 0, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
+        <planeGeometry args={[16, 15]} />
+        <meshStandardMaterial 
+          map={wallTextures.right}
+          roughness={0.9}
+          metalness={0.1}
+        />
+      </mesh>
+      
+      {/* Concrete Floor (replacing the grid) */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
+        <planeGeometry args={[25, 16]} />
+        <meshStandardMaterial 
+          color="#1a1a1a"
+          roughness={0.8}
+          metalness={0.1}
+        />
+      </mesh>
+      
+      {/* Main T-Shirt Model */}
+      <group ref={group} dispose={null}>
+        {Object.entries(nodes).map(([name, node]) => 
+          node.isMesh && node.geometry ? (
+            <mesh
+              key={name}
+              ref={name.includes('hirt') ? meshRef : undefined}
+              geometry={node.geometry}
+              material={compositeMaterial}
+              position={node.position}
+              rotation={node.rotation}
+              scale={node.scale}
+              castShadow
+              receiveShadow
+            />
+          ) : null
+        )}
+      </group>
+    </>
   )
 }
 
 useGLTF.preload('/models/oversized_t-shirt.glb')
 
 export default Model
+
+

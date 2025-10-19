@@ -1,0 +1,504 @@
+/* ===== ENHANCED STICKER LIBRARY STYLES ===== */
+
+.enhanced-sticker-library {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-normal);
+  height: 100%;
+}
+
+/* ===== CONTROLS SECTION ===== */
+.sticker-library__controls {
+  display: flex;
+  gap: var(--space-tight);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-container {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--button-radius);
+  padding: var(--space-micro) var(--space-tight);
+  transition: all var(--transition-smooth);
+}
+
+.search-container:focus-within {
+  border-color: var(--color-accent-purple);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.search-container svg {
+  color: var(--color-text-muted);
+  margin-right: var(--space-micro);
+}
+
+.search-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  flex: 1;
+  font-size: var(--text-base);
+  color: var(--color-text-primary);
+  font-family: var(--font-primary);
+}
+
+.search-input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.view-controls {
+  display: flex;
+  gap: var(--space-tiny);
+  background: var(--color-bg-elevated);
+  border-radius: var(--button-radius);
+  padding: var(--space-tiny);
+  border: 1px solid var(--color-border-light);
+}
+
+.view-controls .btn {
+  margin: 0;
+  border: none;
+  background: transparent;
+}
+
+.view-controls .btn:hover {
+  background: var(--color-accent-purple);
+  color: var(--color-text-inverse);
+}
+
+/* ===== CATEGORY FILTERS ===== */
+.category-filters {
+  display: flex;
+  gap: var(--space-micro);
+  flex-wrap: wrap;
+  padding: var(--space-tight) 0;
+}
+
+.category-filter {
+  padding: var(--space-micro) var(--space-tight);
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-elevated);
+  color: var(--color-text-secondary);
+  border-radius: 20px;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+  white-space: nowrap;
+}
+
+.category-filter:hover {
+  background: var(--color-accent-purple);
+  color: var(--color-text-inverse);
+  border-color: var(--color-accent-purple);
+  transform: translateY(-1px);
+}
+
+.category-filter.active {
+  background: var(--gradient-purple);
+  color: var(--color-text-inverse);
+  border-color: transparent;
+  box-shadow: var(--shadow-purple);
+}
+
+/* ===== UPLOAD AREA ===== */
+.upload-area {
+  border: 2px dashed var(--color-border);
+  border-radius: var(--panel-radius);
+  padding: var(--space-cozy);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+  background: var(--color-bg-canvas);
+  position: relative;
+  overflow: hidden;
+}
+
+.upload-area::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.1), transparent);
+  transition: left var(--transition-smooth);
+}
+
+.upload-area:hover::before {
+  left: 100%;
+}
+
+.upload-area:hover {
+  border-color: var(--color-accent-purple);
+  background: rgba(139, 92, 246, 0.05);
+  transform: scale(1.01);
+}
+
+.upload-area.drag-over {
+  border-color: var(--color-accent-blue);
+  background: rgba(6, 182, 212, 0.1);
+  transform: scale(1.02);
+}
+
+.upload-area.uploading {
+  border-color: var(--color-accent-green);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.upload-area svg {
+  color: var(--color-accent-purple);
+  margin-bottom: var(--space-tight);
+}
+
+.upload-area p {
+  margin: var(--space-micro) 0;
+  color: var(--color-text-primary);
+}
+
+.upload-hint {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted) !important;
+}
+
+/* ===== UPLOAD PROGRESS ===== */
+.upload-progress {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-tight);
+}
+
+.progress-circle {
+  position: relative;
+  width: 60px;
+  height: 60px;
+}
+
+.circular-chart {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.circle-bg {
+  fill: none;
+  stroke: var(--color-border);
+  stroke-width: 2;
+}
+
+.circle {
+  fill: none;
+  stroke: var(--color-accent-green);
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--transition-smooth);
+}
+
+.percentage {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--color-accent-green);
+}
+
+/* ===== STICKERS CONTAINER ===== */
+.stickers-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-tight);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.stickers-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.stickers-container::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+
+.stickers-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-purple);
+}
+
+.stickers-container.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: var(--space-tight);
+  align-content: start;
+}
+
+.stickers-container.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+}
+
+/* ===== STICKER CARD ===== */
+.sticker-card {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--button-radius);
+  padding: var(--space-tight);
+  cursor: pointer;
+  transition: all var(--transition-smooth);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-tight);
+}
+
+.stickers-container.list .sticker-card {
+  flex-direction: row;
+  align-items: center;
+  padding: var(--space-normal);
+}
+
+.sticker-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--gradient-purple);
+  opacity: 0;
+  transition: opacity var(--transition-smooth);
+  pointer-events: none;
+}
+
+.sticker-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--shadow-medium);
+  border-color: var(--color-accent-purple);
+}
+
+.sticker-card:hover::before {
+  opacity: 0.05;
+}
+
+.sticker-card:active {
+  transform: translateY(0) scale(1);
+}
+
+/* ===== STICKER PREVIEW ===== */
+.sticker-preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--button-radius);
+  overflow: hidden;
+  background: var(--color-bg-canvas);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stickers-container.list .sticker-preview {
+  width: 60px;
+  height: 60px;
+  flex-shrink: 0;
+}
+
+.sticker-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-smooth);
+}
+
+.sticker-card:hover .sticker-preview img {
+  transform: scale(1.1);
+}
+
+.preview-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  background: var(--color-bg-canvas);
+}
+
+/* ===== STICKER OVERLAY ===== */
+.sticker-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-micro);
+  opacity: 0;
+  transition: opacity var(--transition-smooth);
+}
+
+.sticker-card:hover .sticker-overlay {
+  opacity: 1;
+}
+
+.btn--overlay {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.btn--overlay:hover {
+  background: var(--color-accent-purple);
+  color: var(--color-text-inverse);
+  transform: scale(1.1);
+}
+
+/* ===== STICKER INFO ===== */
+.sticker-info {
+  flex: 1;
+  text-align: center;
+}
+
+.stickers-container.list .sticker-info {
+  text-align: left;
+  margin-left: var(--space-tight);
+}
+
+.sticker-name {
+  font-size: var(--text-base);
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
+  margin: 0 0 var(--space-tiny) 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sticker-category {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  display: block;
+  margin-bottom: var(--space-tiny);
+}
+
+.sticker-date {
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+  display: block;
+}
+
+/* ===== STICKER ACTIONS ===== */
+.sticker-actions {
+  display: flex;
+  gap: var(--space-micro);
+  margin-left: auto;
+}
+
+.sticker-actions .btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-bg-canvas);
+  border: 1px solid var(--color-border);
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-canvas);
+  text-align: center;
+  color: var(--color-text-muted);
+  min-height: 200px;
+}
+
+.empty-state svg {
+  margin-bottom: var(--space-cozy);
+  opacity: 0.5;
+}
+
+.empty-state h3 {
+  font-size: var(--text-xl);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-tight) 0;
+}
+
+.empty-state p {
+  font-size: var(--text-base);
+  margin: 0 0 var(--space-cozy) 0;
+  max-width: 300px;
+}
+
+/* ===== RESULTS INFO ===== */
+.results-info {
+  padding: var(--space-tight);
+  text-align: center;
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-bg-canvas);
+  border-radius: 0 0 var(--panel-radius) var(--panel-radius);
+}
+
+/* ===== MOBILE OPTIMIZATIONS ===== */
+@media (max-width: 768px) {
+  .sticker-library__controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-container {
+    min-width: unset;
+  }
+  
+  .view-controls {
+    align-self: center;
+  }
+  
+  .category-filters {
+    justify-content: center;
+  }
+  
+  .stickers-container.grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: var(--space-tight);
+  }
+  
+  .upload-area {
+    padding: var(--space-normal);
+  }
+  
+  .sticker-card {
+    padding: var(--space-tight);
+  }
+  
+  .stickers-container.list .sticker-card {
+    padding: var(--space-tight);
+  }
+  
+  .sticker-overlay {
+    gap: var(--space-tiny);
+  }
+  
+  .btn--overlay {
+    width: 28px;
+    height: 28px;
+  }
+}
