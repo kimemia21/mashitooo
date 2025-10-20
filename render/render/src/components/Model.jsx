@@ -47,7 +47,7 @@ function Model({
 
   let nodes, materials, error
   try {
-    const gltf = useGLTF('/models/oversized_t-shirt.glb', true)
+    const gltf = useGLTF('/models/uploads_files_6392619_Hoodie.glb', true)
     nodes = gltf.nodes
     materials = gltf.materials
     if (isLoading) setIsLoading(false)
@@ -60,10 +60,10 @@ function Model({
   const wallTextures = useMemo(() => {
     const textureLoader = new THREE.TextureLoader()
     
-    const backWallUrl = '/sample1.jpg'
-    const leftWallUrl = '/wall2.jpg'
+    const backWallUrl = '/wall1.jpg'
+    const leftWallUrl = '/wall1.jpg'
     const rightWallUrl = '/wall1.jpg'
-    const floorUrl = '/wp5250282.jpg'
+    const floorUrl = '/floor3.jpeg'
     
     const loadTexture = (url) => {
       const texture = textureLoader.load(
@@ -516,6 +516,6 @@ function Model({
   )
 }
 
-useGLTF.preload('/models/oversized_t-shirt.glb')
+useGLTF.preload('/models/uploads_files_6392619_Hoodie.glb')
 
 export default Model
