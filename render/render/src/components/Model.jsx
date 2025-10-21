@@ -4,8 +4,7 @@ import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 /**
- * Urban Custom T-Shirt Shop Editor with Graffiti Walls
- * Street art aesthetic - focus on model
+ * Model component with sticker rendering support
  */
 function Model({ 
   color = '#ffffff', 
@@ -16,9 +15,8 @@ function Model({
 }) {
   const group = useRef()
   const meshRef = useRef()
-  const { camera, gl, size } = useThree()
+  const { camera, gl } = useThree()
   
-  // Enhanced camera state with smoother interpolation
   const cameraState = useRef({
     radius: 4,
     theta: 0,
@@ -26,7 +24,6 @@ function Model({
     targetRadius: 4,
     targetTheta: 0,
     targetPhi: Math.PI / 2,
-    velocity: { theta: 0, phi: 0 },
     damping: 0.15
   })
   
@@ -36,42 +33,50 @@ function Model({
     lastY: 0,
     lastDistance: 0,
     lastTouchTime: 0,
-    isTouchPinch: false,
-    deltaX: 0,
-    deltaY: 0
+    isTouchPinch: false
   })
 
   const textureCache = useRef(new Map())
-  const [, forceUpdate] = useState()
+  const stickerImageCache = useRef(new Map())
   const [isLoading, setIsLoading] = useState(true)
+  const [texturesLoaded, setTexturesLoaded] = useState(false)
+  const [modelLoaded, setModelLoaded] = useState(false)
 
   let nodes, materials, error
   try {
     const gltf = useGLTF('/models/uploads_files_6392619_Hoodie.glb', true)
     nodes = gltf.nodes
     materials = gltf.materials
-    if (isLoading) setIsLoading(false)
+    if (!modelLoaded && nodes) {
+      setModelLoaded(true)
+    }
   } catch (e) {
     error = e
     console.error('Model loading error:', e)
   }
 
-  // Load graffiti wall textures from images
+  // Load wall textures
   const wallTextures = useMemo(() => {
     const textureLoader = new THREE.TextureLoader()
-    
-    const backWallUrl = '/wall1.jpg'
-    const leftWallUrl = '/wall1.jpg'
-    const rightWallUrl = '/wall1.jpg'
-    const floorUrl = '/floor3.jpeg'
+    let loadedCount = 0
+    const totalTextures = 4
     
     const loadTexture = (url) => {
       const texture = textureLoader.load(
         url,
-        undefined,
+        () => {
+          loadedCount++
+          if (loadedCount === totalTextures) {
+            setTexturesLoaded(true)
+          }
+        },
         undefined,
         (error) => {
           console.error('Error loading texture:', error)
+          loadedCount++
+          if (loadedCount === totalTextures) {
+            setTexturesLoaded(true)
+          }
         }
       )
       texture.wrapS = THREE.RepeatWrapping
@@ -83,29 +88,54 @@ function Model({
     }
     
     return {
-      back: loadTexture(backWallUrl),
-      left: loadTexture(leftWallUrl),
-      right: loadTexture(rightWallUrl),
-      floor: loadTexture(floorUrl)
+      back: loadTexture('/wall1.jpg'),
+      left: loadTexture('/wall1.jpg'),
+      right: loadTexture('/wall1.jpg'),
+      floor: loadTexture('/floor3.jpeg')
     }
   }, [gl])
 
-  // Enhanced fabric texture
+  // Load sticker images
+  const loadStickerImage = useCallback((url) => {
+    if (stickerImageCache.current.has(url)) {
+      return Promise.resolve(stickerImageCache.current.get(url))
+    }
+
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        stickerImageCache.current.set(url, img)
+        resolve(img)
+      }
+      img.onerror = reject
+      img.src = url
+    })
+  }, [])
+
+  // Create texture with stickers baked in
   const fabricTexture = useMemo(() => {
-    const cacheKey = `fabric_${color}`
+    const cacheKey = `fabric_${color}_${JSON.stringify(stickers.map(s => ({ id: s.id, x: s.x, y: s.y, side: s.side })))}`
+    
     if (textureCache.current.has(cacheKey)) {
+      console.log('📦 Using cached texture')
       return textureCache.current.get(cacheKey)
     }
+
+    console.log('\n🎨 === CREATING FABRIC TEXTURE WITH STICKERS ===')
+    console.log(`Color: ${color}`)
+    console.log(`Stickers to apply: ${stickers.length}`)
 
     const canvas = document.createElement('canvas')
     canvas.width = 2048
     canvas.height = 2560
     const ctx = canvas.getContext('2d', { alpha: false })
     
+    // Fill with base color
     ctx.fillStyle = color
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     
-    // Fabric texture
+    // Add fabric texture
     ctx.fillStyle = 'rgba(0, 0, 0, 0.015)'
     for (let i = 0; i < canvas.width; i += 2) {
       for (let j = 0; j < canvas.height; j += 2) {
@@ -123,6 +153,60 @@ function Model({
       ctx.fillRect(0, j, canvas.width, 1)
     }
 
+    // Draw stickers onto the texture
+    stickers.forEach((sticker, index) => {
+      console.log(`\n🖼️ Drawing sticker ${index + 1}:`, {
+        name: sticker.name,
+        position: `${sticker.x}%, ${sticker.y}%`,
+        size: `${sticker.width}px × ${sticker.height}px`,
+        side: sticker.side
+      })
+
+      // Convert percentage position to pixel position on canvas
+      const x = (sticker.x / 100) * canvas.width
+      const y = (sticker.y / 100) * canvas.height
+      const width = sticker.width * (canvas.width / 512) // Scale to canvas
+      const height = sticker.height * (canvas.height / 512)
+
+      console.log(`Canvas coordinates:`, {
+        x: x.toFixed(2),
+        y: y.toFixed(2),
+        width: width.toFixed(2),
+        height: height.toFixed(2)
+      })
+
+      // Load and draw sticker image
+      const img = new Image()
+      img.crossOrigin = 'anonymous'
+      img.src = sticker.url
+      
+      img.onload = () => {
+        ctx.save()
+        
+        // Translate to sticker center
+        ctx.translate(x, y)
+        
+        // Apply rotation if specified
+        if (sticker.rotation) {
+          ctx.rotate((sticker.rotation * Math.PI) / 180)
+        }
+        
+        // Draw centered
+        ctx.drawImage(img, -width / 2, -height / 2, width, height)
+        
+        ctx.restore()
+        
+        console.log(`✅ Sticker drawn successfully`)
+        
+        // Update texture
+        texture.needsUpdate = true
+      }
+      
+      img.onerror = () => {
+        console.error(`❌ Failed to load sticker image: ${sticker.url}`)
+      }
+    })
+
     const texture = new THREE.CanvasTexture(canvas)
     texture.wrapS = THREE.ClampToEdgeWrapping
     texture.wrapT = THREE.ClampToEdgeWrapping
@@ -132,8 +216,10 @@ function Model({
     texture.anisotropy = gl.capabilities.getMaxAnisotropy()
     
     textureCache.current.set(cacheKey, texture)
+    
+    console.log('✅ Fabric texture created with stickers')
     return texture
-  }, [color, gl])
+  }, [color, stickers, gl])
 
   const compositeMaterial = useMemo(() => {
     const material = new THREE.MeshStandardMaterial({
@@ -343,6 +429,31 @@ function Model({
     updateCamera()
   })
 
+  useEffect(() => {
+    if (modelLoaded && texturesLoaded && isLoading) {
+      setIsLoading(false)
+    }
+  }, [modelLoaded, texturesLoaded, isLoading])
+
+  if (isLoading || !modelLoaded || !texturesLoaded) {
+    return (
+      <>
+        <color attach="background" args={['#1a1a1a']} />
+        <ambientLight intensity={0.5} />
+        <group position={[0, 0, 0]}>
+          <mesh>
+            <boxGeometry args={[0.5, 0.5, 0.5]} />
+            <meshStandardMaterial 
+              color="#ffffff" 
+              emissive="#4a9eff"
+              emissiveIntensity={0.5}
+            />
+          </mesh>
+        </group>
+      </>
+    )
+  }
+
   if (error || !nodes) {
     return (
       <>
@@ -353,54 +464,30 @@ function Model({
         
         <Environment preset="night" />
         
-        {/* Back Wall */}
         <mesh position={[0, 0, -8]} receiveShadow>
           <planeGeometry args={[25, 15]} />
-          <meshStandardMaterial 
-            color="#2a2a2a"
-            roughness={0.9}
-            metalness={0.1}
-          />
+          <meshStandardMaterial color="#2a2a2a" roughness={0.9} metalness={0.1} />
         </mesh>
         
-        {/* Left Wall */}
         <mesh position={[-8, 0, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
           <planeGeometry args={[16, 15]} />
-          <meshStandardMaterial 
-            color="#2a2a2a"
-            roughness={0.9}
-            metalness={0.1}
-          />
+          <meshStandardMaterial color="#2a2a2a" roughness={0.9} metalness={0.1} />
         </mesh>
         
-        {/* Right Wall */}
         <mesh position={[8, 0, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
           <planeGeometry args={[16, 15]} />
-          <meshStandardMaterial 
-            color="#2a2a2a"
-            roughness={0.9}
-            metalness={0.1}
-          />
+          <meshStandardMaterial color="#2a2a2a" roughness={0.9} metalness={0.1} />
         </mesh>
         
-        {/* Floor */}
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
           <planeGeometry args={[25, 16]} />
-          <meshStandardMaterial 
-            color="#1a1a1a"
-            roughness={0.8}
-            metalness={0.1}
-          />
+          <meshStandardMaterial color="#1a1a1a" roughness={0.8} metalness={0.1} />
         </mesh>
         
         <group ref={group}>
           <mesh castShadow receiveShadow>
             <boxGeometry args={[2.2, 2.8, 0.12]} />
-            <meshStandardMaterial 
-              color={error ? "#ff6b6b" : color}
-              roughness={0.7}
-              metalness={0.1}
-            />
+            <meshStandardMaterial color={error ? "#ff6b6b" : color} roughness={0.7} metalness={0.1} />
           </mesh>
         </group>
       </>
@@ -409,13 +496,10 @@ function Model({
 
   return (
     <>
-      {/* Dark background */}
       <color attach="background" args={['#1a1a1a']} />
       
-      {/* Soft white ambient lighting */}
       <ambientLight intensity={0.5} color="#ffffff" />
       
-      {/* Main key light */}
       <directionalLight
         position={[5, 10, 5]}
         intensity={1.2}
@@ -430,19 +514,12 @@ function Model({
         shadow-camera-bottom={-10}
       />
       
-      {/* Fill light */}
-      <directionalLight
-        position={[-5, 5, -5]}
-        intensity={0.6}
-        color="#ffffff"
-      />
+      <directionalLight position={[-5, 5, -5]} intensity={0.6} color="#ffffff" />
       
-      {/* Accent lights - subtle white */}
       <pointLight position={[0, 5, 5]} intensity={0.8} color="#ffffff" />
       <pointLight position={[-5, 3, -5]} intensity={0.6} color="#ffffff" />
       <pointLight position={[5, 3, -5]} intensity={0.6} color="#ffffff" />
       
-      {/* Rim lighting */}
       <spotLight
         position={[0, 8, -6]}
         intensity={1}
@@ -454,53 +531,32 @@ function Model({
       
       <Environment preset="night" />
       
-      {/* Back Wall with Graffiti Image */}
       <mesh position={[0, 0, -8]} receiveShadow>
         <planeGeometry args={[25, 15]} />
-        <meshStandardMaterial 
-          map={wallTextures.back}
-          roughness={0.9}
-          metalness={0.1}
-        />
+        <meshStandardMaterial map={wallTextures.back} roughness={0.9} metalness={0.1} />
       </mesh>
       
-      {/* Left Wall with Graffiti Image */}
       <mesh position={[-8, 0, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
         <planeGeometry args={[16, 15]} />
-        <meshStandardMaterial 
-          map={wallTextures.left}
-          roughness={0.9}
-          metalness={0.1}
-        />
+        <meshStandardMaterial map={wallTextures.left} roughness={0.9} metalness={0.1} />
       </mesh>
       
-      {/* Right Wall with Graffiti Image */}
       <mesh position={[8, 0, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
         <planeGeometry args={[16, 15]} />
-        <meshStandardMaterial 
-          map={wallTextures.right}
-          roughness={0.9}
-          metalness={0.1}
-        />
+        <meshStandardMaterial map={wallTextures.right} roughness={0.9} metalness={0.1} />
       </mesh>
       
-      {/* Floor with Image Texture */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
         <planeGeometry args={[25, 16]} />
-        <meshStandardMaterial 
-          map={wallTextures.floor}
-          roughness={0.8}
-          metalness={0.1}
-        />
+        <meshStandardMaterial map={wallTextures.floor} roughness={0.8} metalness={0.1} />
       </mesh>
       
-      {/* Main T-Shirt Model - Focus Point */}
       <group ref={group} dispose={null}>
         {Object.entries(nodes).map(([name, node]) => 
           node.isMesh && node.geometry ? (
             <mesh
               key={name}
-              ref={name.includes('hirt') ? meshRef : undefined}
+              ref={name.includes('oodie') ? meshRef : undefined}
               geometry={node.geometry}
               material={compositeMaterial}
               position={node.position}
