@@ -223,7 +223,7 @@ function Model({
 
   const compositeMaterial = useMemo(() => {
     const material = new THREE.MeshStandardMaterial({
-      color: color,
+      color: '#ffffff', // Use white as base to not affect texture colors
       roughness: 0.7,
       metalness: 0.02,
       map: fabricTexture,
@@ -235,8 +235,10 @@ function Model({
     if (viewMode === 'wireframe') {
       material.wireframe = true
       material.wireframeLinewidth = 1
+      material.color.setHex(color.replace('#', '0x')) // Apply color to wireframe
     } else if (viewMode === 'solid') {
       material.map = null
+      material.color.setHex(color.replace('#', '0x')) // Apply color to solid mode
     }
 
     return material
