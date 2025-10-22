@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Zap } from 'lucide-react';
+import { Palette } from 'lucide-react';
 
 const EditModeUI = ({ onSideSelect, onCancel }) => {
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
@@ -11,38 +11,83 @@ const EditModeUI = ({ onSideSelect, onCancel }) => {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
-  const stickers = [
-    { emoji: '🔥', rotation: -10, top: '15%', left: '8%', size: '50px' },
-    { emoji: '⚡', rotation: 12, top: '20%', right: '10%', size: '48px' },
-    { emoji: '💎', rotation: -15, top: '50%', left: '6%', size: '45px' },
-    { emoji: '👁️', rotation: 18, bottom: '25%', right: '8%', size: '42px' },
-    { emoji: '🎯', rotation: -8, bottom: '35%', left: '12%', size: '46px' },
-    { emoji: '✨', rotation: 15, top: '35%', right: '14%', size: '44px' },
+  // Minimal, sophisticated art elements
+  const artElements = [
+    { 
+      type: 'line1',
+      svg: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="10" y1="50" x2="90" y2="50" stroke="#FFD700" stroke-width="2" opacity="0.6"/>
+      </svg>`,
+      rotation: -25,
+      top: '15%',
+      left: '10%',
+      size: '80px'
+    },
+    { 
+      type: 'circle',
+      svg: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="50" cy="50" r="35" stroke="#00FF88" stroke-width="2" opacity="0.5"/>
+      </svg>`,
+      rotation: 0,
+      top: '20%',
+      right: '15%',
+      size: '60px'
+    },
+    { 
+      type: 'square',
+      svg: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="25" y="25" width="50" height="50" stroke="#FF3366" stroke-width="2" opacity="0.5"/>
+      </svg>`,
+      rotation: 15,
+      top: '55%',
+      left: '8%',
+      size: '55px'
+    },
+    { 
+      type: 'line2',
+      svg: `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="20" y1="20" x2="80" y2="80" stroke="#00BFFF" stroke-width="2" opacity="0.6"/>
+      </svg>`,
+      rotation: 0,
+      bottom: '25%',
+      right: '12%',
+      size: '70px'
+    },
   ];
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
-      {/* Blurred Background Image */}
+      {/* Sharp Background Image (OLD CODE - beach image) */}
       <div
-        className="absolute inset-0 bg-cover bg-center transition-all duration-300"
+        className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `url('https://images.unsplash.com/photo-1501594907352-04cda38ebc29?auto=format&fit=crop&w=1920&q=80')`,
-          filter: 'blur(20px) brightness(0.7)',
+          backgroundImage: `url('https://images.vexels.com/media/users/3/358430/raw/96ff7f89c7e9736cec596fb55ecd7972-edgy-urban-hoodie-t-shirt-design.jpg')`,
           transform: 'scale(1.1)',
         }}
       ></div>
 
-      {/* Dynamic unblur region following mouse */}
+      {/* Heavily Blurred Overlay (OLD CODE - beach image) */}
       <div
-        className="absolute inset-0 pointer-events-none transition-all duration-300"
+        className="absolute inset-0 bg-cover bg-center pointer-events-none"
         style={{
-          background: `radial-gradient(circle 250px at ${mousePos.x}px ${mousePos.y}px, rgba(255,255,255,0.08), transparent 70%)`,
-          backdropFilter: `blur(0px)`,
-          WebkitBackdropFilter: `blur(0px)`,
+          backgroundImage: `url('https://images.vexels.com/media/users/3/358430/raw/96ff7f89c7e9736cec596fb55ecd7972-edgy-urban-hoodie-t-shirt-design.jpg')`,
+          filter: 'blur(25px) brightness(0.6)',
+          transform: 'scale(1.1)',
+          maskImage: `radial-gradient(circle 300px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, black 40%)`,
+          WebkitMaskImage: `radial-gradient(circle 300px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, black 40%)`,
+          transition: 'mask-image 0.15s ease-out, -webkit-mask-image 0.15s ease-out',
+        }}
+      ></div>
+
+      {/* Subtle vignette for edges (OLD CODE) */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.7) 100%)',
         }}
       />
 
-      {/* Grid overlay */}
+      {/* Grid overlay (OLD CODE) */}
       <div
         className="absolute inset-0 opacity-10"
         style={{
@@ -54,127 +99,115 @@ const EditModeUI = ({ onSideSelect, onCancel }) => {
         }}
       />
 
-      {/* Mouse glow */}
+      {/* Subtle cursor glow (OLD CODE) */}
       <div
-        className="absolute inset-0"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          background: `radial-gradient(circle 600px at ${mousePos.x}px ${mousePos.y}px, rgba(0,255,100,0.15), transparent 70%)`,
-          transition: 'all 0.3s ease',
+          background: `radial-gradient(circle 200px at ${mousePos.x}px ${mousePos.y}px, rgba(0,255,100,0.08), transparent 60%)`,
+          transition: 'all 0.15s ease-out',
         }}
       />
 
-      {/* Floating stickers */}
-      {stickers.map((s, i) => (
+      {/* Minimal floating art elements (NEW CODE) */}
+      {artElements.map((element, i) => (
         <div
           key={i}
-          className="absolute pointer-events-none select-none opacity-30 hover:opacity-60 transition-opacity duration-500"
+          className="absolute pointer-events-none select-none transition-opacity duration-700"
           style={{
-            top: s.top,
-            left: s.left,
-            right: s.right,
-            bottom: s.bottom,
-            transform: `rotate(${s.rotation}deg)`,
-            fontSize: s.size,
-            filter: 'drop-shadow(0 0 20px rgba(0,255,100,0.4))',
-            animation: `float ${3.5 + i * 0.4}s ease-in-out infinite`,
-            animationDelay: `${i * 0.3}s`,
+            top: element.top,
+            left: element.left,
+            right: element.right,
+            bottom: element.bottom,
+            transform: `rotate(${element.rotation}deg)`,
+            width: element.size,
+            height: element.size,
+            opacity: 0.3,
+            animation: `subtleFloat ${4 + i * 0.5}s ease-in-out infinite`,
+            animationDelay: `${i * 0.5}s`,
           }}
-        >
-          {s.emoji}
-        </div>
+          dangerouslySetInnerHTML={{ __html: element.svg }}
+        />
       ))}
 
-      {/* Main Content */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6 backdrop-blur-md">
-        <div className="inline-flex items-center gap-3 px-5 py-2 bg-gradient-to-r from-green-600 to-green-500 border-2 border-white mb-6 shadow-2xl transform -rotate-1">
-          <span className="text-white text-xs font-black uppercase tracking-widest">
-            UNLEASH
+      {/* Main Content (NEW CODE - styling and text) */}
+      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6">
+        <div className="inline-flex items-center gap-3 px-6 py-2 bg-white/5 backdrop-blur-sm border border-white/10 mb-8 shadow-2xl">
+          <span className="text-white/70 text-xs font-medium uppercase tracking-[0.3em]">
+            Design Studio
           </span>
         </div>
 
-        <h1 className="text-7xl md:text-8xl font-black text-white mb-2 tracking-tight text-center leading-none">
+        <h1 className="text-6xl md:text-7xl font-light text-white mb-3 tracking-tight text-center leading-none">
           <span
-            className="inline-block text-green-400"
+            className="inline-block text-white/90"
             style={{
-              textShadow:
-                '0 0 40px rgba(0,255,100,0.5), 4px 4px 0px rgba(0,0,0,0.8)',
+              textShadow: '0 2px 40px rgba(255,255,255,0.1)',
+              fontFamily: '"Helvetica Neue", Arial, sans-serif',
+              fontWeight: '200',
+              letterSpacing: '-0.02em',
             }}
           >
-            EDIT
+            Create Your
           </span>
           <br />
           <span
-            className="text-white"
+            className="text-white font-normal"
             style={{
-              textShadow:
-                '0 0 30px rgba(255,255,255,0.2), 3px 3px 0px rgba(0,0,0,0.6)',
+              textShadow: '0 2px 40px rgba(255,255,255,0.15)',
+              fontFamily: '"Helvetica Neue", Arial, sans-serif',
+              fontWeight: '400',
+              letterSpacing: '-0.01em',
             }}
           >
-            MODE
+            Signature Piece
           </span>
         </h1>
 
-        <div className="text-6xl mb-4 relative">
-          <div
-            className="absolute inset-0 blur-2xl opacity-50"
-            style={{
-              background:
-                'radial-gradient(circle, rgba(0,255,100,0.6), transparent 70%)',
-            }}
-          ></div>
-          <span className="relative drop-shadow-2xl">🐕</span>
-        </div>
+        <div className="w-16 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent mb-8"></div>
 
-        <p className="text-base text-gray-300 max-w-md mx-auto font-light text-center mb-10 leading-relaxed">
-          Raw power meets smooth design. Drop stickers, paint your vibe, make{' '}
-          <span className="text-green-400 font-semibold">street art</span> that
-          bites back.
+        <p className="text-sm text-gray-400 max-w-lg mx-auto font-light text-center mb-12 leading-relaxed tracking-wide">
+          Design custom apparel with precision and style. Each element you place becomes part of your unique expression—professional tools for creative minds.
         </p>
 
-        {/* CTA Button */}
+        {/* CTA Button (NEW CODE) */}
         <button
           onClick={() => onSideSelect('FRONT')}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className="relative group mb-10 transition-all duration-300 hover:scale-110"
+          className="relative group mb-8 transition-all duration-300"
         >
-          <div
-            className={`absolute -inset-2 bg-gradient-to-r from-green-400 via-green-500 to-green-600 rounded-lg blur-lg opacity-60 group-hover:opacity-100 transition duration-500 ${
-              isHovered ? 'animate-pulse' : ''
-            }`}
-          ></div>
-          <div className="relative px-14 py-5 bg-gradient-to-r from-green-500 to-green-600 border-2 border-green-300 shadow-2xl flex items-center gap-3 transform hover:-skew-x-3 transition-all duration-300">
-            <span className="text-2xl font-black text-black uppercase tracking-wide">
-              CREATE
+          <div className="relative px-12 py-4 bg-white/10 backdrop-blur-md border border-white/20 hover:border-white/40 shadow-2xl flex items-center gap-3 transition-all duration-300 hover:bg-white/15">
+            <span className="text-lg font-light text-white uppercase tracking-[0.2em]">
+              Start Designing
             </span>
-            <Zap className="w-6 h-6 text-black" />
+            <Palette className="w-5 h-5 text-white/70" />
           </div>
         </button>
 
-        {/* Cancel */}
+        {/* Cancel (NEW CODE) */}
         <button
           onClick={onCancel}
-          className="text-gray-400 hover:text-gray-200 transition-colors duration-300 text-sm font-medium px-4 py-2 rounded-lg hover:bg-white/5"
+          className="text-gray-500 hover:text-gray-300 transition-colors duration-300 text-xs font-light px-6 py-2 uppercase tracking-[0.2em]"
         >
-          ← Nah, maybe later
+          Return
         </button>
 
-        <div className="absolute bottom-6 left-0 right-0 text-center">
-          <p className="text-gray-500 text-xs font-bold uppercase tracking-wider">
-            BOLD DESIGNS. ZERO LIMITS. 🔥
+        <div className="absolute bottom-8 left-0 right-0 text-center">
+          <p className="text-gray-600 text-[10px] font-light uppercase tracking-[0.3em]">
+            Professional Design Tools
           </p>
         </div>
       </div>
 
       <style jsx>{`
-        @keyframes float {
+        @keyframes subtleFloat {
           0%, 100% {
-            transform: translateY(0px);
-            opacity: 0.3;
+            transform: translateY(0px) rotate(var(--rotation)) scale(1);
+            opacity: 0.2;
           }
           50% {
-            transform: translateY(-20px);
-            opacity: 0.6;
+            transform: translateY(-15px) rotate(var(--rotation)) scale(1.05);
+            opacity: 0.35;
           }
         }
       `}</style>
