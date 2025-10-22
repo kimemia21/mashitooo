@@ -13,6 +13,7 @@ import { preprocessStickers, createStickerPreview, debugCoordinateMapping, verif
 import './theme.css'
 import './mobile-fixes.css'
 import './styles/simple-mobile.css'
+import './styles/editor.css'
 import { useResponsive } from './hooks/useResponsive'
 import Panel from './components/Panel'
 import IconButton from './components/IconButton'
