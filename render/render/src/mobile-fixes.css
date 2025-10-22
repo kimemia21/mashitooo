@@ -1,6 +1,6 @@
-/* Mobile Responsive Fixes for T-Shirt Designer - Combined & Enhanced */
-
-/* Reset and base styles */
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
 * {
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
