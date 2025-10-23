@@ -4,7 +4,6 @@ import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, Center } from '@react-three/drei'
 import * as THREE from 'three'
 import Model from './components/Model'
-import ModernBackground from './components/ModernBackground'
 import ColorPicker from './components/ColorPicker'
 import StickerPicker from './components/StickerPicker'
 import EditModeUI from './components/EditModeUI'
@@ -36,7 +35,7 @@ const [originalModelColor, setOriginalModelColor] = useState('#ffffff');
   
   // Model selection state
   const [currentModelType, setCurrentModelType] = useState(ModelType.HOODIE)
-  const [currentModelPath, setCurrentModelPath] = useState('/models/uploads_files_6392619_Hoodie.glb')
+  const [currentModelPath, setCurrentModelPath] = useState('/models/hoodies/uploads_files_6392619_Hoodie.glb')
   
   // 2D Editor state (for edit mode)
   const [editorStickers, setEditorStickers] = useState([])

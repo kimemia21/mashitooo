@@ -33,24 +33,40 @@ const ModelSwitcher = ({ currentModel, onModelChange }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [availableModels, setAvailableModels] = useState({});
   const [selectedModel, setSelectedModel] = useState(null);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // Dynamically discover all .glb files in a category folder
+  // Automatically discover all .glb files using Vite's import.meta.glob
   useEffect(() => {
-    const discoverModels = async () => {
+    const discoverModels = () => {
       const modelsMap = {};
 
-      for (const category of CATEGORIES) {
-        try {
-          // Fetch the directory listing (you'll need to implement this based on your setup)
-          // For demo purposes, this simulates discovering files
-          const models = await fetchModelsInFolder(category.id);
-          modelsMap[category.id] = models;
-        } catch (error) {
-          console.error(`Error loading models for ${category.id}:`, error);
-          modelsMap[category.id] = [];
-        }
-      }
+      const hoodieFiles = import.meta.glob('/public/models/hoodies/*.glb', { eager: true, query: '?url', import: 'default' });
+      const tshirtFiles = import.meta.glob('/public/models/t-shirts/*.glb', { eager: true, query: '?url', import: 'default' });
+      const beanieFiles = import.meta.glob('/public/models/beanie/*.glb', { eager: true, query: '?url', import: 'default' });
+      const shirtFiles = import.meta.glob('/public/models/shirts/*.glb', { eager: true, query: '?url', import: 'default' });
+      const capFiles = import.meta.glob('/public/models/caps/*.glb', { eager: true, query: '?url', import: 'default' });
+
+      console.log('🔍 Discovered files:', { hoodieFiles, tshirtFiles, beanieFiles, shirtFiles, capFiles });
+
+      const parseFiles = (files) => {
+        return Object.entries(files).map(([path, url]) => {
+          const fileName = path.split('/').pop().replace('.glb', '');
+          const displayName = fileName
+            .replace(/[-_]/g, ' ')
+            .replace(/\b\w/g, char => char.toUpperCase());
+          
+          return {
+            name: displayName,
+            path: url,
+            fileName: fileName
+          };
+        });
+      };
+
+      modelsMap['hoodies'] = parseFiles(hoodieFiles);
+      modelsMap['t-shirts'] = parseFiles(tshirtFiles);
+      modelsMap['beanie'] = parseFiles(beanieFiles);
+      modelsMap['shirts'] = parseFiles(shirtFiles);
+      modelsMap['caps'] = parseFiles(capFiles);
 
       setAvailableModels(modelsMap);
     };
@@ -58,145 +74,100 @@ const ModelSwitcher = ({ currentModel, onModelChange }) => {
     discoverModels();
   }, []);
 
-  // Simulated function to fetch models - replace with actual implementation
-  const fetchModelsInFolder = async (categoryId) => {
-    // In a real implementation, you'd need a backend endpoint that lists files
-    // Or use a manifest file that gets auto-generated
-    // For now, this is a placeholder that would work with your actual file structure
-    
-    try {
-      // Try to fetch a manifest.json for each category
-      const response = await fetch(`/models/${categoryId}/manifest.json`);
-      if (response.ok) {
-        const data = await response.json();
-        return data.files.map(file => ({
-          name: file.replace('.glb', ''),
-          path: `/models/${categoryId}/${file}`
-        }));
-      }
-    } catch (error) {
-      // Fallback: return empty array if manifest doesn't exist
-      console.warn(`No manifest found for ${categoryId}`);
-    }
-    
-    return [];
-  };
-
   const handleCategorySelect = (category) => {
-    setSelectedCategory(category.id);
+    setSelectedCategory(selectedCategory === category.id ? null : category.id);
     setSelectedModel(null);
-    setIsDropdownOpen(false);
   };
 
   const handleModelSelect = (model) => {
     setSelectedModel(model);
-    setIsDropdownOpen(false);
     onModelChange(selectedCategory, model.path);
   };
 
-  const currentCategoryModels = selectedCategory ? availableModels[selectedCategory] || [] : [];
-
   return (
-    <div
-      className="w-full flex flex-col gap-4 p-4 rounded-2xl border border-white/10 backdrop-blur-2xl bg-black/60 shadow-[0_0_25px_rgba(0,0,0,0.6)]"
-      style={{ fontFamily: '"Helvetica Neue", Arial, sans-serif' }}
+    <div 
+      className="w-full h-full bg-[#1e1e1e] border-l border-[#333] flex flex-col text-[13px]"
+      style={{ fontFamily: '"SF Mono", "Consolas", "Monaco", monospace' }}
     >
-      <div className="text-center mb-1">
-        <p className="text-xs uppercase tracking-[0.3em] text-gray-400 font-light">
-          Select Category
-        </p>
-        <div className="w-12 h-[1px] mx-auto mt-2 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
+      {/* Header */}
+      <div className="px-3 py-2 border-b border-[#333] bg-[#252526]">
+        <div className="text-[11px] uppercase tracking-wider text-gray-400 font-medium">
+          Models
+        </div>
       </div>
 
-      {/* Category Selection */}
-      {CATEGORIES.map((category) => {
-        const isActive = selectedCategory === category.id;
-        return (
-          <button
-            key={category.id}
-            onClick={() => handleCategorySelect(category)}
-            className={`relative group flex items-center justify-between gap-4 px-4 py-3 rounded-xl border transition-all duration-300
-              ${
-                isActive
-                  ? "bg-white/10 border-white/30 scale-[1.02] shadow-[0_0_25px_rgba(255,255,255,0.05)]"
-                  : "bg-transparent border-white/10 hover:bg-white/5 hover:border-white/20 hover:scale-[1.01]"
-              }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 rounded-md overflow-hidden bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center">
-                <img
-                  src={category.img}
-                  alt={category.label}
-                  className="w-full h-full object-contain opacity-100 transition-opacity duration-200"
-                  style={{ imageRendering: "auto" }}
-                />
-              </div>
+      {/* Categories List */}
+      <div className="flex-1 overflow-y-auto">
+        {CATEGORIES.map((category) => {
+          const models = availableModels[category.id] || [];
+          const isExpanded = selectedCategory === category.id;
+          const hasModels = models.length > 0;
 
-              <span
-                className={`text-sm tracking-wide ${
-                  isActive ? "text-white font-medium" : "text-gray-300 font-light"
-                }`}
+          return (
+            <div key={category.id} className="border-b border-[#333]">
+              {/* Category Header */}
+              <button
+                onClick={() => handleCategorySelect(category)}
+                disabled={!hasModels}
+                className={`w-full px-3 py-2 flex items-center gap-2 hover:bg-[#2a2a2a] transition-colors ${
+                  !hasModels ? 'opacity-40 cursor-not-allowed' : ''
+                } ${isExpanded ? 'bg-[#2a2a2a]' : ''}`}
               >
-                {category.label}
-              </span>
+                <span className={`text-gray-400 transition-transform text-[10px] ${isExpanded ? 'rotate-90' : ''}`}>
+                  ▶
+                </span>
+                <div className="w-5 h-5 flex items-center justify-center opacity-60">
+                  <img src={category.img} alt="" className="w-full h-full object-contain" />
+                </div>
+                <span className="flex-1 text-left text-gray-300">{category.label}</span>
+                <span className="text-[10px] text-gray-600">
+                  {models.length}
+                </span>
+              </button>
+
+              {/* Models List */}
+              {isExpanded && hasModels && (
+                <div className="bg-[#1e1e1e]">
+                  {models.map((model, index) => {
+                    const isSelected = selectedModel?.fileName === model.fileName;
+                    
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => handleModelSelect(model)}
+                        className={`w-full px-3 py-1.5 pl-10 text-left flex items-center gap-2 transition-colors ${
+                          isSelected 
+                            ? 'bg-[#094771] text-white' 
+                            : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-gray-300'
+                        }`}
+                      >
+                        <span className="text-[10px] opacity-50">—</span>
+                        <span className="flex-1 truncate text-[12px]">{model.name}</span>
+                        {isSelected && (
+                          <div className="w-1 h-1 rounded-full bg-blue-400" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Empty State */}
+              {isExpanded && !hasModels && (
+                <div className="px-3 py-2 pl-10 text-[11px] text-gray-600 italic">
+                  No models found
+                </div>
+              )}
             </div>
+          );
+        })}
+      </div>
 
-            {isActive && <span className="text-xs text-emerald-400 opacity-90">●</span>}
-
-            <div
-              className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-20 transition-opacity duration-300"
-              style={{
-                background:
-                  "radial-gradient(circle at center, rgba(255,255,255,0.12), transparent 70%)",
-              }}
-            />
-          </button>
-        );
-      })}
-
-      {/* Model Dropdown */}
-      {selectedCategory && currentCategoryModels.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-white/10">
-          <div className="text-center mb-3">
-            <p className="text-xs uppercase tracking-[0.3em] text-gray-400 font-light">
-              Select Model
-            </p>
-            <div className="w-12 h-[1px] mx-auto mt-2 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-          </div>
-
-          <div className="relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 transition-all duration-300 flex items-center justify-between"
-            >
-              <span className="text-sm text-gray-300">
-                {selectedModel ? selectedModel.name : "Choose a model..."}
-              </span>
-              <span className={`text-gray-400 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}`}>
-                ▼
-              </span>
-            </button>
-
-            {isDropdownOpen && (
-              <div className="absolute top-full left-0 right-0 mt-2 max-h-48 overflow-y-auto rounded-xl border border-white/20 bg-black/90 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.8)] z-50">
-                {currentCategoryModels.map((model, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleModelSelect(model)}
-                    className="w-full px-4 py-2.5 text-left text-sm text-gray-300 hover:bg-white/10 transition-colors duration-200 first:rounded-t-xl last:rounded-b-xl"
-                  >
-                    {model.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {selectedCategory && currentCategoryModels.length === 0 && (
-        <div className="mt-4 pt-4 border-t border-white/10 text-center">
-          <p className="text-xs text-gray-500">No models found in this category</p>
+      {/* Footer - Selected Model Info */}
+      {selectedModel && (
+        <div className="px-3 py-2 border-t border-[#333] bg-[#252526]">
+          <div className="text-[10px] text-gray-500 mb-0.5">SELECTED</div>
+          <div className="text-[11px] text-gray-300 truncate">{selectedModel.name}</div>
         </div>
       )}
     </div>

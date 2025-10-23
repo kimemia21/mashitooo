@@ -570,6 +570,6 @@ useEffect(() => {
   )
 }
 
-useGLTF.preload("/models/uploads_files_6392619_Hoodie.glb")
+useGLTF.preload("/models/hoodies/uploads_files_6392619_Hoodie.glb")
 
 export default Model
