@@ -46,24 +46,42 @@ function Model({
   const [originalMap, setOriginalMap] = useState(null)
   
 
-  let nodes, materials, error
-  try {
-    const gltf = useGLTF(path, true)
-    nodes = gltf.nodes
-    materials = gltf.materials
-    if (!modelLoaded && nodes) {
-      setModelLoaded(true)
-    }
-  } catch (e) {
-    error = e
-    console.error('Model loading error:', e)
-  }
+// Load model with proper error handling
+let gltf, error
+try {
+  gltf = useGLTF(path, true)
+} catch (e) {
+  error = e
+  console.error('Model loading error:', e)
+}
 
+const nodes = gltf?.nodes
+const materials = gltf?.materials
   // Set textures as loaded immediately since we're not loading any
-  useEffect(() => {
-    setTexturesLoaded(true)
-  }, [])
+// Reset loading states when path changes
+useEffect(() => {
+  console.log('🔄 Model path changed to:', path)
+  setModelLoaded(false)
+  setIsLoading(true)
+  
+  // Clear texture cache to prevent using old model's textures
+  textureCache.current.clear()
+  
+  // Small delay to ensure proper loading
+  const timer = setTimeout(() => {
+    if (nodes) {
+      setModelLoaded(true)
+      console.log('✅ Model loaded successfully:', path)
+    }
+  }, 100)
+  
+  return () => clearTimeout(timer)
+}, [path, nodes])
 
+// Set textures as loaded immediately since we're not loading any
+useEffect(() => {
+  setTexturesLoaded(true)
+}, [])
 useEffect(() => {
     // Check if the model is loaded and an original color reporting function exists
     if (modelLoaded && nodes && onOriginalColorLoad) {
@@ -473,24 +491,32 @@ useEffect(() => {
     }
   }, [modelLoaded, texturesLoaded, isLoading])
 
-  if (isLoading || !modelLoaded || !texturesLoaded) {
-    return (
-      <>
-        {/* <color attach="background" args={[blurredBackgroundColor]} /> */}
-        <ambientLight intensity={0.5} />
-        <group position={[0, 0, 0]}>
-          <mesh>
-            <boxGeometry args={[0.5, 0.5, 0.5]} />
-            <meshStandardMaterial 
-              color="#ffffff" 
-              emissive="#4a9eff"
-              emissiveIntensity={0.5}
-            />
-          </mesh>
-        </group>
-      </>
-    )
-  }
+ if (isLoading || !modelLoaded || !texturesLoaded || !nodes) {
+  return (
+    <>
+      <ambientLight intensity={0.5} />
+      <group position={[0, 0, 0]}>
+        <mesh>
+          <boxGeometry args={[0.5, 0.5, 0.5]} />
+          <meshStandardMaterial 
+            color="#ffffff" 
+            emissive="#4a9eff"
+            emissiveIntensity={0.5}
+          />
+        </mesh>
+        {/* Loading indicator */}
+        <mesh position={[0, 1, 0]}>
+          <sphereGeometry args={[0.1, 16, 16]} />
+          <meshStandardMaterial 
+            color="#4a9eff"
+            emissive="#4a9eff"
+            emissiveIntensity={1}
+          />
+        </mesh>
+      </group>
+    </>
+  )
+}
 
   if (error || !nodes) {
     return (

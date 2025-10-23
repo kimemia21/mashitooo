@@ -33,10 +33,12 @@ const [originalModelColor, setOriginalModelColor] = useState('#ffffff');
 
 
   
-  // Model selection state
-  const [currentModelType, setCurrentModelType] = useState(ModelType.HOODIE)
-  const [currentModelPath, setCurrentModelPath] = useState('/models/hoodies/uploads_files_6392619_Hoodie.glb')
-  
+// Model selection state
+// Model selection state
+const [currentModelType, setCurrentModelType] = useState(ModelType.HOODIE)
+const [currentModelPath, setCurrentModelPath] = useState('/models/hoodies/uploads_files_6392619_Hoodie.glb')
+const [isModelLoading, setIsModelLoading] = useState(false)
+
   // 2D Editor state (for edit mode)
   const [editorStickers, setEditorStickers] = useState([])
   const [selectedSticker, setSelectedSticker] = useState(null)
@@ -57,13 +59,18 @@ const [originalModelColor, setOriginalModelColor] = useState('#ffffff');
     setOriginalModelColor(color); // Store the original color for potential resets
 };
 
-  // Handle model change
-  const handleModelChange = (modelType, modelPath) => {
-    setCurrentModelType(modelType)
-    setCurrentModelPath(modelPath)
-    // Optionally clear stickers when changing models
-    // setStickers([])
-  }
+// Handle model change
+const handleModelChange = (modelType, modelPath) => {
+  console.log('🔄 Changing model:', { modelType, modelPath })
+  setIsModelLoading(true)
+  setCurrentModelType(modelType)
+  setCurrentModelPath(modelPath)
+  
+  // Reset loading state after a short delay
+  setTimeout(() => {
+    setIsModelLoading(false)
+  }, 500)
+}
 
   // Handle entering edit mode
   const handleEditMode = () => {
@@ -345,7 +352,8 @@ const [originalModelColor, setOriginalModelColor] = useState('#ffffff');
             />
             
             <Center
-            scale={0.7}>
+            // scale={0.7}
+             >
               <Model
                 color={tshirtColor}
                 stickers={stickers}
@@ -577,6 +585,39 @@ const [originalModelColor, setOriginalModelColor] = useState('#ffffff');
           isApplying={isApplying}
         />
       )}
+
+      {/* Model Loading Indicator */}
+{isModelLoading && (
+  <div style={{
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    background: 'rgba(42, 42, 42, 0.95)',
+    border: '1px solid #1a1a1a',
+    color: '#d5d5d5',
+    padding: 'clamp(16px, 4vw, 24px) clamp(24px, 6vw, 40px)',
+    borderRadius: '4px',
+    fontSize: 'clamp(13px, 3.2vw, 14px)',
+    zIndex: 3000,
+    maxWidth: '90vw',
+    textAlign: 'center',
+    boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+    fontWeight: '500'
+  }}>
+    <div style={{
+      width: '32px',
+      height: '32px',
+      border: '3px solid #3d3d3d',
+      borderTop: '3px solid #5680c2',
+      borderRadius: '50%',
+      animation: 'spin 1s linear infinite',
+      margin: '0 auto 12px'
+    }} />
+    Loading {currentModelType.toLowerCase()}...
+  </div>
+)}
+
 
       {/* Progress/Status Messages */}
       {isApplying && (
