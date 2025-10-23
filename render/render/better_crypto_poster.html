@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Finance Youth Workshop - Premium Crypto Training</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .poster-container {
+            width: 794px;
+            height: 1000px;
+            background: linear-gradient(160deg, #0d1117 0%, #161b22 40%, #0a0e1f 100%);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 50px 150px rgba(0, 0, 0, 0.95);
+        }
+        
+        /* Background effects */
+        .gradient-mesh {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0.4;
+        }
+        
+        .mesh-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+        }
+        
+        .mesh-1 {
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(251, 191, 36, 0.25) 0%, transparent 70%);
+            top: -250px;
+            right: -200px;
+        }
+        
+        .mesh-2 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 70%);
+            bottom: -150px;
+            left: -150px;
+        }
+        
+        .mesh-3 {
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+            top: 40%;
+            right: -100px;
+        }
+        
+        /* Grid overlay */
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(59, 130, 246, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.02) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+        
+        /* Content */
+        .content {
+            position: relative;
+            z-index: 10;
+            padding: 25px 40px 25px 40px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Logo section */
+        .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .brand-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+        
+        .logo-wrapper {
+            background: rgba(255, 255, 255, 0.04);
+            padding: 16px 28px;
+            border-radius: 12px;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-image {
+            height: 40px;
+            width: 120px;
+            object-fit: contain;
+            filter: brightness(1.2) contrast(1.1);
+        }
+        
+        .logo-image[alt="Exness"] {
+            filter: brightness(1.8) contrast(1.3) invert(1);
+        }
+        
+        .brand-separator {
+            width: 1px;
+            height: 30px;
+            background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        }
+        
+        /* Headlines */
+        .headline-zone {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: #00d4ff;
+            margin-bottom: 20px;
+            opacity: 0.95;
+        }
+        
+        .main-headline {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: 58px;
+            line-height: 0.85;
+            letter-spacing: -2px;
+            margin-bottom: 18px;
+        }
+        
+        .headline-line {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            display: block;
+        }
+        
+        .headline-line.accent {
+            background: linear-gradient(135deg, #ff6b35 0%, #f7931e 50%, #ffcc02 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .tagline {
+            font-family: 'Manrope', sans-serif;
+            font-size: 18px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 28px;
+            letter-spacing: 0.2px;
+        }
+        
+        .tagline-highlight {
+            color: #ffcc02;
+            font-weight: 700;
+        }
+        
+        .event-date {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(0, 212, 255, 0.15);
+            padding: 12px 24px;
+            border-radius: 100px;
+            border: 1px solid rgba(0, 212, 255, 0.4);
+            backdrop-filter: blur(10px);
+            margin-bottom: 40px;
+        }
+        
+        .date-label {
+            font-family: 'Manrope', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Investment section - properly sized */
+        .hero-investment {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 204, 2, 0.25);
+            border-radius: 20px;
+            padding: 15px 25px 20px 25px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: visible;
+            backdrop-filter: blur(15px);
+            min-height: auto;
+        }
+        
+        .hero-investment::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255, 204, 2, 0.04) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        
+        .investment-content {
+            position: relative;
+            z-index: 2;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        
+        .investment-tag {
+            font-family: 'Manrope', sans-serif;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255, 204, 2, 0.8);
+            margin-bottom: 10px;
+        }
+        
+        .investment-amount {
+            font-family: 'Inter', sans-serif;
+            font-size: 36px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            pointer-events: none;
+        }
+        
+        .currency {
+            background: linear-gradient(135deg, #ffcc02 0%, #ffffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        @media print {
+            .currency {
+                background: none !important;
+                -webkit-background-clip: unset !important;
+                -webkit-text-fill-color: #ffcc02 !important;
+                background-clip: unset !important;
+                color: #ffcc02 !important;
+            }
+            
+            .investment-amount {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            * {
+                -webkit-user-select: none !important;
+                -moz-user-select: none !important;
+                -ms-user-select: none !important;
+                user-select: none !important;
+            }
+        }
+        
+        .investment-detail {
+            font-family: 'Manrope', sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff;
+            line-height: 1.4;
+            margin-bottom: 8px;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.2);
+        }
+        
+        .detail-highlight {
+            font-weight: 800;
+            color: #ffffff;
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.4);
+        }
+        
+        .freedom-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 212, 255, 0.12);
+            padding: 6px 14px;
+            border-radius: 100px;
+            border: 1px solid rgba(0, 212, 255, 0.3);
+            margin-top: 8px;
+        }
+        
+        .freedom-badge-text {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 600;
+            color: #00d4ff;
+            letter-spacing: 0.5px;
+        }
+        
+        /* Benefits section */
+        .benefits-wrapper {
+            margin-bottom: 10px;
+        }
+        
+        .benefits-title {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 16px;
+        }
+        
+        .benefits-list {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        
+        .benefit-text {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.4;
+            position: relative;
+            padding-left: 16px;
+        }
+        
+        .benefit-text::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #fbbf24;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        /* Access section */
+        .access-section {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            backdrop-filter: blur(20px);
+        }
+        
+        .access-label {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+        
+        .access-text {
+            font-family: 'DM Sans', sans-serif;
+            font-size: 15px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.4;
+        }
+        
+        .access-highlight {
+            font-weight: 700;
+            color: #fff;
+        }
+        
+        .access-link {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: #ffcc02;
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: rgba(255, 204, 2, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(255, 204, 2, 0.2);
+            text-shadow: 0 0 8px rgba(255, 204, 2, 0.3);
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        
+        .access-link:hover {
+            background: rgba(255, 204, 2, 0.2);
+            border: 1px solid rgba(255, 204, 2, 0.4);
+            text-shadow: 0 0 12px rgba(255, 204, 2, 0.5);
+            transform: translateY(-1px);
+        }
+        
+        /* CTA */
+        .cta-zone {
+            margin-top: auto;
+        }
+        
+        .cta-button {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            padding: 12px 0;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        
+        
+        .cta-content {
+            position: relative;
+            z-index: 1;
+        }
+        
+        .cta-text {
+            font-family: 'Inter', sans-serif;
+            font-size: 18px;
+            font-weight: 800;
+            color: #0a0e1f;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 1px;
+        }
+        
+        .cta-subtext {
+            font-family: 'Manrope', sans-serif;
+            font-size: 10px;
+            font-weight: 600;
+            color: rgba(10, 14, 31, 0.7);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body id="artifacts-component-root-html">
+    <div class="poster-container">
+        <!-- Background -->
+        <div class="gradient-mesh">
+            <div class="mesh-orb mesh-1"></div>
+            <div class="mesh-orb mesh-2"></div>
+            <div class="mesh-orb mesh-3"></div>
+        </div>
+        <div class="grid-overlay"></div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Logos -->
+            <div class="logo-section">
+                <div class="brand-container">
+                    <div class="logo-wrapper">
+                        <img src="https://techfininn.com/wp-content/uploads/2024/08/logo-white-1.png" alt="Techfininn" class="logo-image">
+                    </div>
+                    <div class="logo-wrapper">
+                        <img src="https://d33vw3iu5hs0zi.cloudfront.net/media/logo_big_new_f7ebab0194.svg" alt="Exness" class="logo-image">
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Headline zone -->
+            <div class="headline-zone">
+                <p class="eyebrow">Digital Finance Youth Workshop</p>
+                
+                <h1 class="main-headline">
+                    <span class="headline-line">FREE ONLINE</span>
+                    <span class="headline-line accent">CRYPTO TRAINING</span>
+                </h1>
+                
+                <p class="tagline">
+                    <span class="tagline-highlight">Perfect for beginners.</span> Start your journey to financial freedom.
+                </p>
+                
+                <div class="event-date">
+                    <span class="date-label">15th November 2025</span>
+                </div>
+            </div>
+            
+            <!-- KES 5,000 Investment Section -->
+            <div class="hero-investment">
+                <div class="investment-content">
+                    <p class="investment-tag">Your Starter Capital</p>
+                    
+                    <div class="investment-amount">
+                        <span class="currency">KES 5,000</span>
+                    </div>
+                    
+                    <p class="investment-detail">
+                        KES 5,000 deposited directly to your <span class="detail-highlight">Exness account</span> - complete freedom to trade, withdraw, or reinvest as you choose.
+                    </p>
+                    
+                    <p class="investment-detail">
+                        <span class="detail-highlight">100% yours.</span> Start trading immediately and keep all profits you make.
+                    </p>
+                    
+                    <div class="freedom-badge">
+                        <span class="freedom-badge-text">✓ Full Control • No Lock-In Period</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- What you'll learn -->
+            <div class="benefits-wrapper">
+                <h3 class="benefits-title">What You'll Master</h3>
+                <div class="benefits-list">
+                    <p class="benefit-text">Crypto Trading Basics</p>
+                    <p class="benefit-text">Risk Management</p>
+                    <p class="benefit-text">Market Analysis</p>
+                    <p class="benefit-text">Live Trading Sessions</p>
+                </div>
+            </div>
+            
+            <!-- Access info -->
+            <div class="access-section">
+                <p class="access-label">How to Access</p>
+                <p class="access-text">
+                    Unlock <span class="access-highlight">full training access</span> via our exclusive affiliate link
+                </p>
+                <a href="https://one.exnessonelink.com/a/8w9h5l350i" target="_blank" class="access-link">https://one.exnessonelink.com/a/8w9h5l350i</a>
+            </div>
+            
+            <!-- CTA -->
+            <div class="cta-zone">
+                <div class="cta-button">
+                    <div class="cta-content">
+                        <div class="cta-text">DM NOW TO REGISTER</div>
+                      
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Print functionality
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+                e.preventDefault();
+                window.print();
+            }
+        });
+        
+        console.log('%c📄 To save as PDF: Press Ctrl+P (Cmd+P on Mac) → Save as PDF', 'color: #fbbf24; font-size: 14px; font-weight: bold;');
+    </script>
+    </div>
+</body>
+</html>

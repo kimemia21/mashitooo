@@ -24,11 +24,15 @@ function App() {
   const [appMode, setAppMode] = useState('VIEW') // 'VIEW', 'EDIT', 'MESH_EDIT'
   const [editSide, setEditSide] = useState(null) // 'FRONT', 'BACK'
   const [tshirtColor, setTshirtColor] = useState('#ffffff')
+const [originalModelColor, setOriginalModelColor] = useState('#ffffff');
   const [stickers, setStickers] = useState([])
   const [stickerLibrary, setStickerLibrary] = useState([
     { url: '/sample-sticker.svg', name: 'Sample Sticker' },
     { url: '/test-sticker.svg', name: 'Test Sticker' }
   ])
+
+
+
   
   // Model selection state
   const [currentModelType, setCurrentModelType] = useState(ModelType.HOODIE)
@@ -45,6 +49,14 @@ function App() {
   // UI state for mobile
   const [leftPanelOpen, setLeftPanelOpen] = useState(false)
   const [rightPanelOpen, setRightPanelOpen] = useState(false)
+
+  const handleOriginalColorLoad = (color) => {
+    // Only set the color if it hasn't been modified yet
+    if (tshirtColor === '#ffffff') { 
+        setTshirtColor(color);
+    }
+    setOriginalModelColor(color); // Store the original color for potential resets
+};
 
   // Handle model change
   const handleModelChange = (modelType, modelPath) => {
@@ -231,12 +243,56 @@ function App() {
       {/* Main 3D View Mode */}
       {appMode === 'VIEW' && (
         <>
+<div 
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        zIndex: 0,
+        // Base color is black for the corners
+        backgroundColor: '#000000', 
+        overflow: 'hidden', 
+      }}
+    >
+        {/* Inner DIV for the Blur and Gradient (Center Focus) */}
+        <div 
+          style={{
+            width: '100%',
+            height: '100%',
+            // Gradient: Lighter grey center (#555555) fading to transparent/black at 75%
+            // This creates the strong visual vignette to focus the center.
+            backgroundImage: 'radial-gradient(circle at center, rgba(190, 190, 190, 1) 0%, rgba(0, 0, 0, 0.8) 75%, rgba(0, 0, 0, 1) 100%)',
+            filter: 'blur(20px)', // High blur for soft, out-of-focus look
+            transform: 'scale(1.1)', // Prevents blur edges from showing
+          }}
+        />
+
+        {/* Grain Overlay for subtle texture */}
+        <div 
+            className="grain-overlay" // Requires the CSS class below
+            style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+                opacity: 0.05, // Subtle grain
+                pointerEvents: 'none',
+            }}
+        />
+    </div>
+
+       
           <Canvas
             camera={{ position: [0, 0, 5], fov: 50 }}
-            style={{ width: '100%', height: '100%' }}
+            style={{ width: '100%', height: '100%'}}
+           
             gl={{ 
               antialias: true,
-              alpha: false,
+              clearColor: new THREE.Color(0, 0, 0, 0),
+              alpha: true,
               powerPreference: 'high-performance',
               preserveDrawingBuffer: false
             }}
@@ -260,14 +316,14 @@ function App() {
             <pointLight position={[0, -5, 5]} intensity={0.4} color="#4a9eff" />
             
             <Environment preset="studio" />
-            <ModernBackground />
+            {/* <ModernBackground /> */}
             
             <OrbitControls 
               ref={controlsRef}
               enablePan={true}
               enableZoom={true}
               enableRotate={true}
-              minDistance={2}
+             minDistance={0.1}
               maxDistance={10}
               enableDamping={true}
               dampingFactor={0.05}
@@ -275,6 +331,8 @@ function App() {
               zoomSpeed={1.0}
               panSpeed={0.8}
               target={[0, 0, 0]}
+              autoRotate={true} 
+  autoRotateSpeed={0.5} 
               makeDefault
               touches={{
                 ONE: 2,
@@ -287,7 +345,8 @@ function App() {
               }}
             />
             
-            <Center>
+            <Center
+            scale={0.7}>
               <Model
                 color={tshirtColor}
                 stickers={stickers}
@@ -295,6 +354,7 @@ function App() {
                 backgroundImage="/urbanfusion-africanwomangraffitiillustration_882186-30433.jpg"
                 path={currentModelPath}
                 type={currentModelType}
+                onOriginalColorLoad={handleOriginalColorLoad}
               />
             </Center>
           </Canvas>

@@ -1,19 +1,19 @@
 import React, { useRef, useEffect, useState, useMemo, useCallback } from 'react'
-import { useGLTF, Environment } from '@react-three/drei'
+import { useGLTF } from '@react-three/drei'
 import { useFrame, useThree } from '@react-three/fiber'
 import * as THREE from 'three'
 
 /**
- * Model component with sticker rendering support
+ * Model component with sticker rendering support and grey background
  */
 function Model({ 
-  color = '#ffffff', 
+  color, 
   stickers = [],
   viewMode = 'rendered',
   enableAdvancedControls = true,
   onRotationChange = null,
   path ,
-  type
+  onOriginalColorLoad
 }) {
   const group = useRef()
   const meshRef = useRef()
@@ -43,6 +43,8 @@ function Model({
   const [isLoading, setIsLoading] = useState(true)
   const [texturesLoaded, setTexturesLoaded] = useState(false)
   const [modelLoaded, setModelLoaded] = useState(false)
+  const [originalMap, setOriginalMap] = useState(null)
+  
 
   let nodes, materials, error
   try {
@@ -57,92 +59,62 @@ function Model({
     console.error('Model loading error:', e)
   }
 
+  // Set textures as loaded immediately since we're not loading any
+  useEffect(() => {
+    setTexturesLoaded(true)
+  }, [])
 
- const getWallTexturePaths = useCallback(() => {
-  switch (type) {
-    case "HOODIE":
-      return {
-        back: "/wall1.jpg",
-        left: "/wall1.jpg",
-        right: "/wall1.jpg",
-        floor: "/floor3.jpeg",
-      };
-    case "TSHIRT":
-      return {
-        // Verified abstract graffiti walls - NO people
-        back: "https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?auto=format&fit=crop&w=1200&q=80",
-        left: "https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?auto=format&fit=crop&w=1200&q=80",
-        right: "https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?auto=format&fit=crop&w=1200&q=80",
+useEffect(() => {
+    // Check if the model is loaded and an original color reporting function exists
+    if (modelLoaded && nodes && onOriginalColorLoad) {
         
-        floor: "/floor3.jpeg",
-      };
-    case "SHIRT":
-      return {
-        // Pure colorful spray paint textures
-        back: "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&w=1200&q=80",
-        left: "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&w=1200&q=80",
-        right: "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&w=1200&q=80",
-        
-        floor: "/floor3.jpeg",
-      };
-    case "CAP":
-      return {
-        // Abstract street art tags - pure walls
-        back: "https://images.unsplash.com/photo-1561998338-13ad7883b20f?auto=format&fit=crop&w=1200&q=80",
-        left: "https://images.unsplash.com/photo-1561998338-13ad7883b20f?auto=format&fit=crop&w=1200&q=80",
-        right: "https://images.unsplash.com/photo-1561998338-13ad7883b20f?auto=format&fit=crop&w=1200&q=80",
-        
-        floor: "/floor3.jpeg",
-      };
-    default:
-      return {
-        back: "/wall1.jpg",
-        left: "/wall1.jpg",
-        right: "/wall1.jpg",
-        floor: "/floor3.jpeg",
-      };
-  }
-}, [type]);
+        // Find the primary mesh (e.g., the hoodie mesh)
+        const primaryMesh = Object.values(nodes).find(
+            node => node.isMesh && node.name.toLowerCase().includes('hoodie')
+        );
 
-  const wallTextures = useMemo(() => {
-    const textureLoader = new THREE.TextureLoader()
-    const texturePaths = getWallTexturePaths()
-    let loadedCount = 0
-    const totalTextures = 4
-    
-    const loadTexture = (url) => {
-      const texture = textureLoader.load(
-        url,
-        () => {
-          loadedCount++
-          if (loadedCount === totalTextures) {
-            setTexturesLoaded(true)
-          }
-        },
-        undefined,
-        (error) => {
-          console.error('Error loading texture:', error)
-          loadedCount++
-          if (loadedCount === totalTextures) {
-            setTexturesLoaded(true)
-          }
+        if (primaryMesh && primaryMesh.material) {
+            let originalColor = '#ffffff'; // Fallback
+            
+            // Attempt to get the color from the material's color property
+            if (primaryMesh.material.color) {
+                originalColor = `#${primaryMesh.material.color.getHexString()}`;
+            }
+
+            // ✅ Call the prop function to report the color back to App.js
+            onOriginalColorLoad(originalColor);
         }
-      )
-      texture.wrapS = THREE.RepeatWrapping
-      texture.wrapT = THREE.RepeatWrapping
-      texture.minFilter = THREE.LinearMipmapLinearFilter
-      texture.magFilter = THREE.LinearFilter
-      texture.anisotropy = gl.capabilities.getMaxAnisotropy()
-      return texture
     }
-    
-    return {
-      back: loadTexture(texturePaths.back),
-      left: loadTexture(texturePaths.left),
-      right: loadTexture(texturePaths.right),
-      floor: loadTexture(texturePaths.floor)
+
+}, [modelLoaded, nodes, onOriginalColorLoad]);
+
+
+// Model.jsx (Add a new useEffect)
+
+// Note: You must add onOriginalColorLoad to the destructured props
+// (e.g., function Model({ color = '#ffffff', stickers = [], ..., onOriginalColorLoad = null, ... })
+
+useEffect(() => {
+    if (modelLoaded && nodes) {
+        const primaryMesh = Object.values(nodes).find(
+            node => node.isMesh && node.name.toLowerCase().includes('hoodie')
+        );
+
+        if (primaryMesh && primaryMesh.material) {
+            // 1. Extract Color
+            if (primaryMesh.material.color && onOriginalColorLoad) {
+                const originalColor = `#${primaryMesh.material.color.getHexString()}`;
+                onOriginalColorLoad(originalColor);
+            }
+            
+            // 2. Extract Texture Map (e.g., the fabric weave)
+            if (primaryMesh.material.map) {
+                // The map is a THREE.Texture object. We store it to use in the canvas.
+                setOriginalMap(primaryMesh.material.map); 
+            }
+        }
     }
-  }, [gl, getWallTexturePaths])
+}, [modelLoaded, nodes, onOriginalColorLoad]);
 
   // Load sticker images
   const loadStickerImage = useCallback((url) => {
@@ -179,9 +151,21 @@ function Model({
     canvas.width = 2048
     canvas.height = 2560
     const ctx = canvas.getContext('2d', { alpha: false })
+    if (originalMap && originalMap.image) {
+        // 1. Draw the original texture (fabric weave/details) onto the canvas first.
+        ctx.drawImage(originalMap.image, 0, 0, canvas.width, canvas.height);
+        
+        // 2. Overlay the custom color using the 'multiply' blend mode.
+        // This acts as a TINT, changing the hue while preserving the fabric texture details.
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // 3. Reset blend mode so stickers are drawn normally (not tinted).
+        ctx.globalCompositeOperation = 'source-over'; 
     
-    // Fill with base color
-    ctx.fillStyle = color
+    } else {
+       ctx.fillStyle = color
     ctx.fillRect(0, 0, canvas.width, canvas.height)
     
     // Add fabric texture
@@ -200,7 +184,10 @@ function Model({
     }
     for (let j = 0; j < canvas.height; j += 4) {
       ctx.fillRect(0, j, canvas.width, 1)
-    }
+    }}
+    
+
+  
 
     // Draw stickers onto the texture
     stickers.forEach((sticker, index) => {
@@ -489,7 +476,7 @@ function Model({
   if (isLoading || !modelLoaded || !texturesLoaded) {
     return (
       <>
-        <color attach="background" args={['#1a1a1a']} />
+        {/* <color attach="background" args={[blurredBackgroundColor]} /> */}
         <ambientLight intensity={0.5} />
         <group position={[0, 0, 0]}>
           <mesh>
@@ -508,32 +495,10 @@ function Model({
   if (error || !nodes) {
     return (
       <>
-        <color attach="background" args={['#1a1a1a']} />
-        <ambientLight intensity={0.5} color="#ffffff" />
-        <directionalLight position={[5, 10, 5]} intensity={1.2} color="#ffffff" castShadow />
-        <pointLight position={[0, 5, 5]} intensity={1} color="#ffffff" />
-        
-        <Environment preset="night" />
-        
-        <mesh position={[0, 0, -8]} receiveShadow>
-          <planeGeometry args={[25, 15]} />
-          <meshStandardMaterial color="#2a2a2a" roughness={0.9} metalness={0.1} />
-        </mesh>
-        
-        <mesh position={[-8, 0, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
-          <planeGeometry args={[16, 15]} />
-          <meshStandardMaterial color="#2a2a2a" roughness={0.9} metalness={0.1} />
-        </mesh>
-        
-        <mesh position={[8, 0, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
-          <planeGeometry args={[16, 15]} />
-          <meshStandardMaterial color="#2a2a2a" roughness={0.9} metalness={0.1} />
-        </mesh>
-        
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
-          <planeGeometry args={[25, 16]} />
-          <meshStandardMaterial color="#1a1a1a" roughness={0.8} metalness={0.1} />
-        </mesh>
+        {/* <color attach="background" args={[blurredBackgroundColor]} /> */}
+        <ambientLight intensity={0.8} color="#ffffff" />
+        <directionalLight position={[5, 10, 5]} intensity={1} color="#ffffff" castShadow />
+        <pointLight position={[0, 5, 5]} intensity={0.8} color="#ffffff" />
         
         <group ref={group}>
           <mesh castShadow receiveShadow>
@@ -547,9 +512,9 @@ function Model({
 
   return (
     <>
-      <color attach="background" args={['#1a1a1a']} />
+    {/* <color attach="background" args={[blurredBackgroundColor]} /> */}
       
-      <ambientLight intensity={0.5} color="#ffffff" />
+      <ambientLight intensity={0.6} color="#ffffff" />
       
       <directionalLight
         position={[5, 10, 5]}
@@ -573,43 +538,25 @@ function Model({
       
       <spotLight
         position={[0, 8, -6]}
-        intensity={1}
+        intensity={0.8}
         angle={0.6}
         penumbra={1}
         color="#ffffff"
         castShadow
       />
       
-      <Environment preset="night" />
-      
-      <mesh position={[0, 0, -8]} receiveShadow>
-        <planeGeometry args={[25, 15]} />
-        <meshStandardMaterial map={wallTextures.back} roughness={0.9} metalness={0.1} />
-      </mesh>
-      
-      <mesh position={[-8, 0, 0]} rotation={[0, Math.PI / 2, 0]} receiveShadow>
-        <planeGeometry args={[16, 15]} />
-        <meshStandardMaterial map={wallTextures.left} roughness={0.9} metalness={0.1} />
-      </mesh>
-      
-      <mesh position={[8, 0, 0]} rotation={[0, -Math.PI / 2, 0]} receiveShadow>
-        <planeGeometry args={[16, 15]} />
-        <meshStandardMaterial map={wallTextures.right} roughness={0.9} metalness={0.1} />
-      </mesh>
-      
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2, 0]} receiveShadow>
-        <planeGeometry args={[25, 16]} />
-        <meshStandardMaterial map={wallTextures.floor} roughness={0.8} metalness={0.1} />
-      </mesh>
-      
-      <group ref={group} dispose={null}>
+      <group ref={group} dispose={null} scale={1.2}>
         {Object.entries(nodes).map(([name, node]) => 
           node.isMesh && node.geometry ? (
             <mesh
               key={name}
               ref={name.includes('oodie') ? meshRef : undefined}
               geometry={node.geometry}
-              material={compositeMaterial}
+             material={
+          viewMode === 'rendered'
+            ? compositeMaterial 
+            : node.material 
+        }
               position={node.position}
               rotation={node.rotation}
               scale={node.scale}
