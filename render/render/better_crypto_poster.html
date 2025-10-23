@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Finance Youth Workshop - Premium Crypto Training</title>
+    <title>Digital Finance Youth Workshop - Premium Crypto Training - Get a clearer logo for Techfininn. Add our website address below our logo (gives confidence to anyone who wants to find out if we are legit). Cheers</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
         
@@ -116,8 +116,42 @@
             backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.06);
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
+            gap: 8px;
+        }
+        
+        .logo-wrapper.techfininn {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.2) 100%);
+            border: 1px solid rgba(59, 130, 246, 0.4);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+        }
+        
+        .logo-link {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .logo-website {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 0.5px;
+            transition: color 0.3s ease;
+        }
+        
+        .logo-wrapper.techfininn .logo-website {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+        
+        .logo-link:hover .logo-website {
+            color: #ffffff;
         }
         
         .logo-image {
@@ -157,8 +191,8 @@
         .main-headline {
             font-family: 'Inter', sans-serif;
             font-weight: 900;
-            font-size: 58px;
-            line-height: 0.85;
+            font-size: 54px;
+            line-height: 0.9;
             letter-spacing: -2px;
             margin-bottom: 18px;
         }
@@ -374,62 +408,6 @@
             font-size: 18px;
         }
         
-        /* Access section */
-        .access-section {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 10px 14px;
-            margin-bottom: 10px;
-            backdrop-filter: blur(20px);
-        }
-        
-        .access-label {
-            font-family: 'DM Sans', sans-serif;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: #3b82f6;
-            margin-bottom: 10px;
-        }
-        
-        .access-text {
-            font-family: 'DM Sans', sans-serif;
-            font-size: 15px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.9);
-            line-height: 1.4;
-        }
-        
-        .access-highlight {
-            font-weight: 700;
-            color: #fff;
-        }
-        
-        .access-link {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            font-weight: 600;
-            color: #ffcc02;
-            margin-top: 8px;
-            padding: 8px 12px;
-            background: rgba(255, 204, 2, 0.1);
-            border-radius: 8px;
-            border: 1px solid rgba(255, 204, 2, 0.2);
-            text-shadow: 0 0 8px rgba(255, 204, 2, 0.3);
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
-        }
-        
-        .access-link:hover {
-            background: rgba(255, 204, 2, 0.2);
-            border: 1px solid rgba(255, 204, 2, 0.4);
-            text-shadow: 0 0 12px rgba(255, 204, 2, 0.5);
-            transform: translateY(-1px);
-        }
-        
         /* CTA */
         .cta-zone {
             margin-top: auto;
@@ -487,8 +465,11 @@
             <!-- Logos -->
             <div class="logo-section">
                 <div class="brand-container">
-                    <div class="logo-wrapper">
-                        <img src="https://techfininn.com/wp-content/uploads/2024/08/logo-white-1.png" alt="Techfininn" class="logo-image">
+                    <div class="logo-wrapper techfininn">
+                        <a href="https://techfininn.com/" target="_blank" class="logo-link">
+                            <img src="https://techfininn.com/wp-content/uploads/2024/08/logo-white-1.png" alt="Techfininn" class="logo-image">
+                            <span class="logo-website">techfininn.com</span>
+                        </a>
                     </div>
                     <div class="logo-wrapper">
                         <img src="https://d33vw3iu5hs0zi.cloudfront.net/media/logo_big_new_f7ebab0194.svg" alt="Exness" class="logo-image">
@@ -502,7 +483,8 @@
                 
                 <h1 class="main-headline">
                     <span class="headline-line">FREE ONLINE</span>
-                    <span class="headline-line accent">CRYPTO TRAINING</span>
+                    <span class="headline-line accent">CRYPTO & FOREX</span>
+                    <span class="headline-line accent">TRADING TRAINING</span>
                 </h1>
                 
                 <p class="tagline">
@@ -548,23 +530,15 @@
                 </div>
             </div>
             
-            <!-- Access info -->
-            <div class="access-section">
-                <p class="access-label">How to Access</p>
-                <p class="access-text">
-                    Unlock <span class="access-highlight">full training access</span> via our exclusive affiliate link
-                </p>
-                <a href="https://one.exnessonelink.com/a/8w9h5l350i" target="_blank" class="access-link">https://one.exnessonelink.com/a/8w9h5l350i</a>
-            </div>
-            
             <!-- CTA -->
             <div class="cta-zone">
-                <div class="cta-button">
-                    <div class="cta-content">
-                        <div class="cta-text">DM NOW TO REGISTER</div>
-                      
+                <a href="https://one.exnessonelink.com/a/8w9h5l350i" target="_blank" style="text-decoration: none;">
+                    <div class="cta-button">
+                        <div class="cta-content">
+                            <div class="cta-text">CLICK TO REGISTER</div>
+                        </div>
                     </div>
-                </div>
+                </a>
             </div>
         </div>
     </div>
@@ -580,6 +554,5 @@
         
         console.log('%c📄 To save as PDF: Press Ctrl+P (Cmd+P on Mac) → Save as PDF', 'color: #fbbf24; font-size: 14px; font-weight: bold;');
     </script>
-    </div>
 </body>
 </html>
