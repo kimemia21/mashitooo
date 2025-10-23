@@ -11,7 +11,9 @@ function Model({
   stickers = [],
   viewMode = 'rendered',
   enableAdvancedControls = true,
-  onRotationChange = null
+  onRotationChange = null,
+  path ,
+  type
 }) {
   const group = useRef()
   const meshRef = useRef()
@@ -44,7 +46,7 @@ function Model({
 
   let nodes, materials, error
   try {
-    const gltf = useGLTF('/models/uploads_files_6392619_Hoodie.glb', true)
+    const gltf = useGLTF(path, true)
     nodes = gltf.nodes
     materials = gltf.materials
     if (!modelLoaded && nodes) {
@@ -55,9 +57,56 @@ function Model({
     console.error('Model loading error:', e)
   }
 
-  // Load wall textures
+
+ const getWallTexturePaths = useCallback(() => {
+  switch (type) {
+    case "HOODIE":
+      return {
+        back: "/wall1.jpg",
+        left: "/wall1.jpg",
+        right: "/wall1.jpg",
+        floor: "/floor3.jpeg",
+      };
+    case "TSHIRT":
+      return {
+        // Verified abstract graffiti walls - NO people
+        back: "https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?auto=format&fit=crop&w=1200&q=80",
+        left: "https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?auto=format&fit=crop&w=1200&q=80",
+        right: "https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?auto=format&fit=crop&w=1200&q=80",
+        
+        floor: "/floor3.jpeg",
+      };
+    case "SHIRT":
+      return {
+        // Pure colorful spray paint textures
+        back: "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&w=1200&q=80",
+        left: "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&w=1200&q=80",
+        right: "https://images.unsplash.com/photo-1547826039-bfc35e0f1ea8?auto=format&fit=crop&w=1200&q=80",
+        
+        floor: "/floor3.jpeg",
+      };
+    case "CAP":
+      return {
+        // Abstract street art tags - pure walls
+        back: "https://images.unsplash.com/photo-1561998338-13ad7883b20f?auto=format&fit=crop&w=1200&q=80",
+        left: "https://images.unsplash.com/photo-1561998338-13ad7883b20f?auto=format&fit=crop&w=1200&q=80",
+        right: "https://images.unsplash.com/photo-1561998338-13ad7883b20f?auto=format&fit=crop&w=1200&q=80",
+        
+        floor: "/floor3.jpeg",
+      };
+    default:
+      return {
+        back: "/wall1.jpg",
+        left: "/wall1.jpg",
+        right: "/wall1.jpg",
+        floor: "/floor3.jpeg",
+      };
+  }
+}, [type]);
+
   const wallTextures = useMemo(() => {
     const textureLoader = new THREE.TextureLoader()
+    const texturePaths = getWallTexturePaths()
     let loadedCount = 0
     const totalTextures = 4
     
@@ -88,12 +137,12 @@ function Model({
     }
     
     return {
-      back: loadTexture('/wall1.jpg'),
-      left: loadTexture('/wall1.jpg'),
-      right: loadTexture('/wall1.jpg'),
-      floor: loadTexture('/floor3.jpeg')
+      back: loadTexture(texturePaths.back),
+      left: loadTexture(texturePaths.left),
+      right: loadTexture(texturePaths.right),
+      floor: loadTexture(texturePaths.floor)
     }
-  }, [gl])
+  }, [gl, getWallTexturePaths])
 
   // Load sticker images
   const loadStickerImage = useCallback((url) => {
@@ -574,6 +623,6 @@ function Model({
   )
 }
 
-useGLTF.preload('/models/uploads_files_6392619_Hoodie.glb')
+useGLTF.preload("/models/uploads_files_6392619_Hoodie.glb")
 
 export default Model

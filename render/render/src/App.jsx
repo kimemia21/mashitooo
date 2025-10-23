@@ -9,7 +9,9 @@ import ColorPicker from './components/ColorPicker'
 import StickerPicker from './components/StickerPicker'
 import EditModeUI from './components/EditModeUI'
 import StickerEditor from './components/StickerEditor'
+import ModelSwitcher from './components/ModelSwitcher'
 import { preprocessStickers, createStickerPreview, debugCoordinateMapping, verifyCoordinateSystem } from './utils/stickerMapping'
+import { ModelType } from './enums/AppEnums'
 import './theme.css'
 import './mobile-fixes.css'
 import './styles/simple-mobile.css'
@@ -28,6 +30,10 @@ function App() {
     { url: '/test-sticker.svg', name: 'Test Sticker' }
   ])
   
+  // Model selection state
+  const [currentModelType, setCurrentModelType] = useState(ModelType.HOODIE)
+  const [currentModelPath, setCurrentModelPath] = useState('/models/uploads_files_6392619_Hoodie.glb')
+  
   // 2D Editor state (for edit mode)
   const [editorStickers, setEditorStickers] = useState([])
   const [selectedSticker, setSelectedSticker] = useState(null)
@@ -39,6 +45,14 @@ function App() {
   // UI state for mobile
   const [leftPanelOpen, setLeftPanelOpen] = useState(false)
   const [rightPanelOpen, setRightPanelOpen] = useState(false)
+
+  // Handle model change
+  const handleModelChange = (modelType, modelPath) => {
+    setCurrentModelType(modelType)
+    setCurrentModelPath(modelPath)
+    // Optionally clear stickers when changing models
+    // setStickers([])
+  }
 
   // Handle entering edit mode
   const handleEditMode = () => {
@@ -52,7 +66,7 @@ function App() {
     const sideStickers = stickers.filter(s => s.side === side)
     setEditorStickers(sideStickers.map(s => ({
       ...s,
-      x: s.editorX || 50, // Default to center if no editor position
+      x: s.editorX || 50,
       y: s.editorY || 50,
       width: s.editorWidth || 100,
       height: s.editorHeight || 100,
@@ -66,9 +80,9 @@ function App() {
       id: Date.now(),
       url: sticker.url,
       name: sticker.name,
-      x: 50, // Center position (percentage)
+      x: 50,
       y: 50,
-      width: 100, // Size in pixels
+      width: 100,
       height: 100,
       rotation: 0,
       side: editSide
@@ -97,21 +111,17 @@ function App() {
     }
   }
 
-  // Apply 2D editor changes to 3D model with PERFECT 1:1 coordinate mapping
+  // Apply 2D editor changes to 3D model
   const handleApplyChanges = async () => {
     setIsApplying(true)
     
     try {
-      // Verify coordinate system first
       verifyCoordinateSystem(editorStickers)
-      
-      // Remove old stickers for this side
       const otherSideStickers = stickers.filter(s => s.side !== editSide)
       
       console.log(`\n🎯 === APPLYING ${editSide} SIDE STICKERS ===`)
       console.log(`Processing ${editorStickers.length} stickers from 2D editor...`)
       
-      // Log all editor stickers with their exact coordinates
       editorStickers.forEach((sticker, index) => {
         console.log(`Editor Sticker ${index + 1}: "${sticker.name}"`, {
           position: `${sticker.x}%, ${sticker.y}%`,
@@ -120,11 +130,9 @@ function App() {
         })
       })
       
-      // Process stickers with PERFECT coordinate preservation
       console.log('\n🔄 Processing coordinates...')
       const processedStickers = await preprocessStickers(editorStickers, editSide)
       
-      // Verify each sticker mapping
       let allMappingsPerfect = true
       processedStickers.forEach((processed, index) => {
         const original = editorStickers[index]
@@ -151,17 +159,14 @@ function App() {
         console.log('✅ ALL COORDINATE MAPPINGS VERIFIED PERFECT!')
       }
       
-      // Create final stickers with EXACT coordinates
       const finalStickers = processedStickers.map(sticker => ({
         ...sticker,
         side: editSide,
-        // Store original editor data for verification
         editorX: sticker.originalX,
         editorY: sticker.originalY,
         editorWidth: sticker.originalWidth,
         editorHeight: sticker.originalHeight,
         editorRotation: sticker.originalRotation,
-        // Processing metadata
         processed: true,
         appliedAt: new Date().toISOString(),
         mappingVerified: allMappingsPerfect
@@ -177,11 +182,9 @@ function App() {
         })
       })
       
-      // Simulate processing time for texture generation
       console.log('\n⏳ Generating 3D texture...')
       await new Promise(resolve => setTimeout(resolve, 1200))
       
-      // Apply to state
       setStickers([...otherSideStickers, ...finalStickers])
       
       console.log(`\n✅ SUCCESSFULLY APPLIED ${finalStickers.length} STICKERS TO ${editSide} SIDE`)
@@ -240,7 +243,6 @@ function App() {
             dpr={Math.min(window.devicePixelRatio, 2)}
             shadows
           >
-            {/* Modern Studio Lighting */}
             <ambientLight intensity={0.3} />
             <directionalLight 
               position={[10, 10, 5]} 
@@ -258,11 +260,8 @@ function App() {
             <pointLight position={[0, -5, 5]} intensity={0.4} color="#4a9eff" />
             
             <Environment preset="studio" />
-            
-            {/* Modern Background */}
             <ModernBackground />
             
-            {/* Model-only rotation controls */}
             <OrbitControls 
               ref={controlsRef}
               enablePan={true}
@@ -278,13 +277,13 @@ function App() {
               target={[0, 0, 0]}
               makeDefault
               touches={{
-                ONE: 2,  // ROTATE
-                TWO: 1   // DOLLY_PAN
+                ONE: 2,
+                TWO: 1
               }}
               mouseButtons={{
-                LEFT: 0,   // ROTATE
-                MIDDLE: 1, // DOLLY
-                RIGHT: 2   // PAN
+                LEFT: 0,
+                MIDDLE: 1,
+                RIGHT: 2
               }}
             />
             
@@ -294,14 +293,12 @@ function App() {
                 stickers={stickers}
                 viewMode="rendered"
                 backgroundImage="/urbanfusion-africanwomangraffitiillustration_882186-30433.jpg"
-                
-                
+                path={currentModelPath}
+                type={currentModelType}
               />
             </Center>
           </Canvas>
 
-          {/* UI Controls Layout - Proper Z-index and positioning */}
-          
           {/* Mobile Menu Button */}
           {isMobile && (
             <div style={{
@@ -336,7 +333,7 @@ function App() {
             />
           )}
 
-          {/* Left Panel - Color Picker */}
+          {/* Left Panel - Model Switcher & Color Picker */}
           <div style={{
             position: isMobile ? 'fixed' : 'absolute',
             top: 0,
@@ -347,8 +344,22 @@ function App() {
             zIndex: 1000,
             transform: isMobile ? (leftPanelOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
             transition: 'transform 0.3s ease',
-            pointerEvents: 'auto'
+            pointerEvents: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
           }}>
+            <Panel 
+              title="Model Type" 
+              collapsible={!isMobile} 
+              defaultOpen={!isMobile}
+            >
+              <ModelSwitcher 
+                currentModel={currentModelType}
+                onModelChange={handleModelChange}
+              />
+            </Panel>
+
             <Panel 
               title="Colors" 
               collapsible={!isMobile} 
@@ -387,7 +398,6 @@ function App() {
           {/* Floating Action Buttons - Mobile */}
           {isMobile && (
             <>
-              {/* Bottom Right FAB Group */}
               <div style={{
                 position: 'fixed',
                 bottom: '20px',
@@ -415,7 +425,6 @@ function App() {
                 />
               </div>
 
-              {/* Bottom Center - Primary Action */}
               <div style={{
                 position: 'fixed',
                 bottom: '20px',
@@ -538,7 +547,7 @@ function App() {
             animation: 'spin 1s linear infinite',
             margin: '0 auto 12px'
           }} />
-          Applying designs to t-shirt...
+          Applying designs to {currentModelType.toLowerCase()}...
         </div>
       )}
 
@@ -548,16 +557,13 @@ function App() {
           100% { transform: rotate(360deg); }
         }
 
-        /* Mobile responsive adjustments */
         @media (max-width: 768px) {
-          /* Ensure buttons don't overlap on small screens */
           body {
             -webkit-tap-highlight-color: transparent;
           }
         }
 
         @media (max-width: 480px) {
-          /* Stack buttons vertically on very small screens */
           .button-group {
             flex-direction: column !important;
             width: 100%;
