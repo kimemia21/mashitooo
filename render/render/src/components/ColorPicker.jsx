@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 
 const ColorPicker = ({ color, onChange, originalColor = null }) => {
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
   const presetColors = [
     '#ffffff', '#ececec', '#d5d5d5', '#b0b0b0', '#8c8c8c',
@@ -15,20 +16,39 @@ const ColorPicker = ({ color, onChange, originalColor = null }) => {
       {/* Header - Always Visible */}
       <div 
         onClick={() => setIsExpanded(!isExpanded)}
-        className="bg-gradient-to-b from-[#3e3e3e] to-[#2d2d2d] border border-[#1a1a1a] rounded-t-md px-3 py-2 cursor-pointer flex items-center justify-between transition-all hover:from-[#494949] hover:to-[#373737] select-none"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="cursor-pointer flex items-center justify-between transition-all select-none"
         style={{
+          background: isHovered 
+            ? 'linear-gradient(to bottom, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08))' 
+            : 'linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: isHovered ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
           borderBottomLeftRadius: isExpanded ? 0 : '0.375rem',
           borderBottomRightRadius: isExpanded ? 0 : '0.375rem',
-          borderBottom: isExpanded ? '1px solid #2d2d2d' : '1px solid #1a1a1a'
+          borderBottom: isExpanded ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(255, 255, 255, 0.1)',
+          padding: '12px 16px',
+          fontFamily: '"Helvetica Neue", Arial, sans-serif',
+          borderTopLeftRadius: '0.375rem',
+          borderTopRightRadius: '0.375rem'
         }}
       >
-        <div className="flex items-center gap-2 text-xs text-[#c5c5c5]">
+        <div className="flex items-center gap-2" style={{ fontSize: '12px', color: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}>
           {/* Color icon */}
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <circle cx="8" cy="8" r="7" stroke="#8c8c8c" strokeWidth="1.5"/>
-            <path d="M8 2 L8 14 M2 8 L14 8" stroke="#8c8c8c" strokeWidth="1.5"/>
+            <circle cx="8" cy="8" r="7" stroke={isHovered ? "#ffffff" : "#8c8c8c"} strokeWidth="1.5"/>
+            <path d="M8 2 L8 14 M2 8 L14 8" stroke={isHovered ? "#ffffff" : "#8c8c8c"} strokeWidth="1.5"/>
           </svg>
-          <span className="font-medium">Color</span>
+          <span style={{ 
+            fontWeight: '400', 
+            letterSpacing: '0.02em',
+            fontFamily: '"Helvetica Neue", Arial, sans-serif',
+            textShadow: '0 1px 4px rgba(0, 0, 0, 0.3)'
+          }}>
+            Color
+          </span>
         </div>
         
         <div className="flex items-center gap-2">
@@ -56,7 +76,21 @@ const ColorPicker = ({ color, onChange, originalColor = null }) => {
 
       {/* Expanded Panel */}
       {isExpanded && (
-        <div className="bg-[#3a3a3a] border border-t-0 border-[#1a1a1a] rounded-b-md p-3 shadow-lg max-h-[400px] overflow-y-auto overflow-x-hidden">
+        <div style={{
+          background: 'rgba(26, 26, 26, 0.9)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: 'none',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          borderBottomLeftRadius: '0.375rem',
+          borderBottomRightRadius: '0.375rem',
+          padding: '16px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+          maxHeight: '400px',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          fontFamily: '"Helvetica Neue", Arial, sans-serif'
+        }}>
           {/* Hex Input */}
           <div className="bg-[#2a2a2a] border border-[#1a1a1a] rounded p-2 mb-3 flex items-center gap-2">
             <div 

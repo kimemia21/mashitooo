@@ -57,21 +57,21 @@ const EditModeUI = ({ onSideSelect, onCancel }) => {
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
-      {/* Sharp Background Image (OLD CODE - beach image) */}
+      {/* Sharp Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{
-          backgroundImage: `url('https://images.vexels.com/media/users/3/358430/raw/96ff7f89c7e9736cec596fb55ecd7972-edgy-urban-hoodie-t-shirt-design.jpg')`,
+          backgroundImage: `url('/back.jpg')`,
           transform: 'scale(1.1)',
         }}
       ></div>
 
-      {/* Heavily Blurred Overlay (OLD CODE - beach image) */}
+      {/* Heavily Blurred Overlay */}
       <div
         className="absolute inset-0 bg-cover bg-center pointer-events-none"
         style={{
-          backgroundImage: `url('https://images.vexels.com/media/users/3/358430/raw/96ff7f89c7e9736cec596fb55ecd7972-edgy-urban-hoodie-t-shirt-design.jpg')`,
-          filter: 'blur(25px) brightness(0.6)',
+          backgroundImage: `url('/back.jpg')`,
+          filter: 'blur(8px) brightness(0.6)',
           transform: 'scale(1.1)',
           maskImage: `radial-gradient(circle 300px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, black 40%)`,
           WebkitMaskImage: `radial-gradient(circle 300px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, black 40%)`,
@@ -79,7 +79,7 @@ const EditModeUI = ({ onSideSelect, onCancel }) => {
         }}
       ></div>
 
-      {/* Subtle vignette for edges (OLD CODE) */}
+      {/* Subtle vignette for edges */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -87,7 +87,7 @@ const EditModeUI = ({ onSideSelect, onCancel }) => {
         }}
       />
 
-      {/* Grid overlay (OLD CODE) */}
+      {/* Grid overlay */}
       <div
         className="absolute inset-0 opacity-10"
         style={{
@@ -99,7 +99,7 @@ const EditModeUI = ({ onSideSelect, onCancel }) => {
         }}
       />
 
-      {/* Subtle cursor glow (OLD CODE) */}
+      {/* Subtle cursor glow */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -108,7 +108,7 @@ const EditModeUI = ({ onSideSelect, onCancel }) => {
         }}
       />
 
-      {/* Minimal floating art elements (NEW CODE) */}
+      {/* Minimal floating art elements */}
       {artElements.map((element, i) => (
         <div
           key={i}
@@ -129,15 +129,15 @@ const EditModeUI = ({ onSideSelect, onCancel }) => {
         />
       ))}
 
-      {/* Main Content (NEW CODE - styling and text) */}
-      <div className="relative z-10 h-full flex flex-col items-center justify-center px-6">
-        <div className="inline-flex items-center gap-3 px-6 py-2 bg-white/5 backdrop-blur-sm border border-white/10 mb-8 shadow-2xl">
-          <span className="text-white/70 text-xs font-medium uppercase tracking-[0.3em]">
+      {/* Main Content - Responsive */}
+      <div className="relative z-10 h-full flex flex-col items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-1.5 sm:py-2 bg-white/5 backdrop-blur-sm border border-white/10 mb-6 sm:mb-8 shadow-2xl">
+          <span className="text-white/70 text-[10px] sm:text-xs font-medium uppercase tracking-[0.2em] sm:tracking-[0.3em]">
             Design Studio
           </span>
         </div>
 
-        <h1 className="text-6xl md:text-7xl font-light text-white mb-3 tracking-tight text-center leading-none">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light text-white mb-2 sm:mb-3 tracking-tight text-center leading-none">
           <span
             className="inline-block text-white/90"
             style={{
@@ -163,37 +163,37 @@ const EditModeUI = ({ onSideSelect, onCancel }) => {
           </span>
         </h1>
 
-        <div className="w-16 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent mb-8"></div>
+        <div className="w-12 sm:w-16 h-[1px] bg-gradient-to-r from-transparent via-white/40 to-transparent mb-6 sm:mb-8"></div>
 
-        <p className="text-sm text-gray-400 max-w-lg mx-auto font-light text-center mb-12 leading-relaxed tracking-wide">
+        <p className="text-xs sm:text-sm text-gray-400 max-w-sm sm:max-w-lg mx-auto font-light text-center mb-8 sm:mb-12 leading-relaxed tracking-wide px-4">
           Design custom apparel with precision and style. Each element you place becomes part of your unique expression—professional tools for creative minds.
         </p>
 
-        {/* CTA Button (NEW CODE) */}
+        {/* CTA Button - Responsive */}
         <button
           onClick={() => onSideSelect('FRONT')}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          className="relative group mb-8 transition-all duration-300"
+          className="relative group mb-6 sm:mb-8 transition-all duration-300"
         >
-          <div className="relative px-12 py-4 bg-white/10 backdrop-blur-md border border-white/20 hover:border-white/40 shadow-2xl flex items-center gap-3 transition-all duration-300 hover:bg-white/15">
-            <span className="text-lg font-light text-white uppercase tracking-[0.2em]">
+          <div className="relative px-8 sm:px-12 py-3 sm:py-4 bg-white/10 backdrop-blur-md border border-white/20 hover:border-white/40 shadow-2xl flex items-center gap-2 sm:gap-3 transition-all duration-300 hover:bg-white/15">
+            <span className="text-base sm:text-lg font-light text-white uppercase tracking-[0.15em] sm:tracking-[0.2em]">
               Start Designing
             </span>
-            <Palette className="w-5 h-5 text-white/70" />
+            <Palette className="w-4 h-4 sm:w-5 sm:h-5 text-white/70" />
           </div>
         </button>
 
-        {/* Cancel (NEW CODE) */}
+        {/* Cancel Button - Responsive */}
         <button
           onClick={onCancel}
-          className="text-gray-500 hover:text-gray-300 transition-colors duration-300 text-xs font-light px-6 py-2 uppercase tracking-[0.2em]"
+          className="text-gray-500 hover:text-gray-300 transition-colors duration-300 text-[10px] sm:text-xs font-light px-4 sm:px-6 py-2 uppercase tracking-[0.15em] sm:tracking-[0.2em]"
         >
           Return
         </button>
 
-        <div className="absolute bottom-8 left-0 right-0 text-center">
-          <p className="text-gray-600 text-[10px] font-light uppercase tracking-[0.3em]">
+        <div className="absolute bottom-6 sm:bottom-8 left-0 right-0 text-center">
+          <p className="text-gray-600 text-[9px] sm:text-[10px] font-light uppercase tracking-[0.2em] sm:tracking-[0.3em]">
             Professional Design Tools
           </p>
         </div>

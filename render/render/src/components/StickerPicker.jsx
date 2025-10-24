@@ -4,6 +4,7 @@ import { Upload, Image } from 'lucide-react'
 const StickerPicker = ({ onStickerSelect, stickers, onStickerUpload }) => {
   const [draggedFile, setDraggedFile] = useState(null)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
   const handleFileUpload = (event) => {
     const file = event.target.files?.[0]
@@ -44,16 +45,35 @@ const StickerPicker = ({ onStickerSelect, stickers, onStickerUpload }) => {
       {/* Header - Always Visible */}
       <div 
         onClick={() => setIsExpanded(!isExpanded)}
-        className="bg-gradient-to-b from-[#3e3e3e] to-[#2d2d2d] border border-[#1a1a1a] rounded-t-md px-3 py-2 cursor-pointer flex items-center justify-between transition-all hover:from-[#494949] hover:to-[#373737] select-none"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        className="cursor-pointer flex items-center justify-between transition-all select-none"
         style={{
+          background: isHovered 
+            ? 'linear-gradient(to bottom, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.08))' 
+            : 'linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          border: isHovered ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
           borderBottomLeftRadius: isExpanded ? 0 : '0.375rem',
           borderBottomRightRadius: isExpanded ? 0 : '0.375rem',
-          borderBottom: isExpanded ? '1px solid #2d2d2d' : '1px solid #1a1a1a'
+          borderBottom: isExpanded ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(255, 255, 255, 0.1)',
+          padding: '12px 16px',
+          fontFamily: '"Helvetica Neue", Arial, sans-serif',
+          borderTopLeftRadius: '0.375rem',
+          borderTopRightRadius: '0.375rem'
         }}
       >
-        <div className="flex items-center gap-2 text-xs text-[#c5c5c5]">
-          <Image size={14} className="text-[#8c8c8c]" />
-          <span className="font-medium">Assets</span>
+        <div className="flex items-center gap-2" style={{ fontSize: '12px', color: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.8)' }}>
+          <Image size={14} style={{ color: isHovered ? "#ffffff" : "#8c8c8c" }} />
+          <span style={{ 
+            fontWeight: '400', 
+            letterSpacing: '0.02em',
+            fontFamily: '"Helvetica Neue", Arial, sans-serif',
+            textShadow: '0 1px 4px rgba(0, 0, 0, 0.3)'
+          }}>
+            Assets
+          </span>
         </div>
         
         <div className="flex items-center gap-2">
@@ -75,7 +95,21 @@ const StickerPicker = ({ onStickerSelect, stickers, onStickerUpload }) => {
 
       {/* Expanded Panel */}
       {isExpanded && (
-        <div className="bg-[#3a3a3a] border border-t-0 border-[#1a1a1a] rounded-b-md p-3 shadow-lg max-h-[400px] overflow-y-auto overflow-x-hidden">
+        <div style={{
+          background: 'rgba(26, 26, 26, 0.9)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          border: 'none',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          borderBottomLeftRadius: '0.375rem',
+          borderBottomRightRadius: '0.375rem',
+          padding: '16px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+          maxHeight: '400px',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          fontFamily: '"Helvetica Neue", Arial, sans-serif'
+        }}>
           {/* Upload Area */}
           <div
             className={`border-2 border-dashed rounded p-4 text-center mb-3 cursor-pointer transition-all ${

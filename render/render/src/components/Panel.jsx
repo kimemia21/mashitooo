@@ -29,6 +29,7 @@ const Panel = ({
 }) => {
   const [isOpen, setIsOpen] = useState(defaultOpen)
   const [contentHeight, setContentHeight] = useState('auto')
+  const [isHovered, setIsHovered] = useState(false)
   const contentRef = useRef(null)
 
   useEffect(() => {
@@ -96,17 +97,27 @@ const Panel = ({
     <div 
       className={`panel ${collapsible ? 'collapsible' : ''} ${className}`} 
       {...props}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       style={{
-        backgroundColor: '#1a1a1a',
+        backgroundColor: 'rgba(26, 26, 26, 0.8)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         borderRadius: '12px',
         overflow: 'hidden',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: isHovered ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
         marginBottom: '12px',
         width: '100%',
-        maxWidth: '384px', // Compact max width
+        maxWidth: '384px',
         marginLeft: 'auto',
         marginRight: 'auto',
-        boxSizing: 'border-box'
+        boxSizing: 'border-box',
+        transition: 'all 0.3s ease',
+        boxShadow: isHovered 
+          ? '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(255, 255, 255, 0.1)' 
+          : '0 4px 16px rgba(0, 0, 0, 0.4)',
+        fontFamily: '"Helvetica Neue", Arial, sans-serif',
+        fontWeight: '300'
       }}
     >
       <div 
@@ -128,12 +139,16 @@ const Panel = ({
       >
         <span 
           style={{ 
-            fontWeight: '600',
+            fontWeight: '400',
             fontSize: '14px',
-            color: '#fff',
+            color: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.9)',
             flex: 1,
             lineHeight: '1.5',
-            wordBreak: 'break-word'
+            wordBreak: 'break-word',
+            fontFamily: '"Helvetica Neue", Arial, sans-serif',
+            letterSpacing: '0.02em',
+            textShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+            transition: 'color 0.3s ease'
           }}
         >
           {title}
@@ -145,13 +160,16 @@ const Panel = ({
               width: '32px',
               height: '32px',
               border: 'none',
-              background: 'rgba(255, 255, 255, 0.05)',
+              background: isHovered ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
               borderRadius: '8px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              transition: 'background-color 0.2s ease'
+              transition: 'all 0.3s ease',
+              border: isHovered ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid transparent'
             }}
           >
             {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}

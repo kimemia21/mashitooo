@@ -33,6 +33,7 @@ const ModelSwitcher = ({ currentModel, onModelChange }) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [availableModels, setAvailableModels] = useState({});
   const [selectedModel, setSelectedModel] = useState(null);
+  const [isHovered, setIsHovered] = useState(false)
 
   // Automatically discover all .glb files using Vite's import.meta.glob
   useEffect(() => {
@@ -86,12 +87,41 @@ const ModelSwitcher = ({ currentModel, onModelChange }) => {
 
   return (
     <div 
-      className="w-full h-full bg-[#1e1e1e] border-l border-[#333] flex flex-col text-[13px]"
-      style={{ fontFamily: '"SF Mono", "Consolas", "Monaco", monospace' }}
+      className="w-full h-full flex flex-col text-[13px]"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{ 
+        fontFamily: '"Helvetica Neue", Arial, sans-serif',
+        background: 'rgba(26, 26, 26, 0.9)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border: isHovered ? '1px solid rgba(255, 255, 255, 0.3)' : '1px solid rgba(255, 255, 255, 0.1)',
+        borderRadius: '8px',
+        transition: 'all 0.3s ease',
+        boxShadow: isHovered 
+          ? '0 8px 32px rgba(0, 0, 0, 0.6)' 
+          : '0 4px 16px rgba(0, 0, 0, 0.4)'
+      }}
     >
       {/* Header */}
-      <div className="px-3 py-2 border-b border-[#333] bg-[#252526]">
-        <div className="text-[11px] uppercase tracking-wider text-gray-400 font-medium">
+      <div style={{
+        padding: '12px 16px',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+        background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
+        backdropFilter: 'blur(8px)',
+        borderTopLeftRadius: '8px',
+        borderTopRightRadius: '8px'
+      }}>
+        <div style={{
+          fontSize: '11px',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+          color: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+          fontWeight: '400',
+          fontFamily: '"Helvetica Neue", Arial, sans-serif',
+          textShadow: '0 1px 4px rgba(0, 0, 0, 0.3)',
+          transition: 'color 0.3s ease'
+        }}>
           Models
         </div>
       </div>
@@ -109,25 +139,80 @@ const ModelSwitcher = ({ currentModel, onModelChange }) => {
               <button
                 onClick={() => handleCategorySelect(category)}
                 disabled={!hasModels}
-                className={`w-full px-3 py-2 flex items-center gap-2 hover:bg-[#2a2a2a] transition-colors ${
-                  !hasModels ? 'opacity-40 cursor-not-allowed' : ''
-                } ${isExpanded ? 'bg-[#2a2a2a]' : ''}`}
+                style={{
+                  width: '100%',
+                  padding: '12px 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: isExpanded 
+                    ? 'rgba(255, 255, 255, 0.1)' 
+                    : 'transparent',
+                  border: 'none',
+                  cursor: hasModels ? 'pointer' : 'not-allowed',
+                  opacity: !hasModels ? 0.4 : 1,
+                  transition: 'all 0.3s ease',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  fontFamily: '"Helvetica Neue", Arial, sans-serif'
+                }}
+                onMouseEnter={(e) => {
+                  if (hasModels) {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.08)'
+                    e.target.style.backdropFilter = 'blur(8px)'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (hasModels) {
+                    e.target.style.background = isExpanded ? 'rgba(255, 255, 255, 0.1)' : 'transparent'
+                    e.target.style.backdropFilter = 'none'
+                  }
+                }}
               >
-                <span className={`text-gray-400 transition-transform text-[10px] ${isExpanded ? 'rotate-90' : ''}`}>
+                <span style={{
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  transition: 'transform 0.3s ease',
+                  fontSize: '10px',
+                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)'
+                }}>
                   ▶
                 </span>
-                <div className="w-5 h-5 flex items-center justify-center opacity-60">
-                  <img src={category.img} alt="" className="w-full h-full object-contain" />
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: 0.6
+                }}>
+                  <img src={category.img} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                 </div>
-                <span className="flex-1 text-left text-gray-300">{category.label}</span>
-                <span className="text-[10px] text-gray-600">
+                <span style={{
+                  flex: 1,
+                  textAlign: 'left',
+                  color: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.8)',
+                  fontSize: '13px',
+                  fontWeight: '400',
+                  letterSpacing: '0.01em',
+                  textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                  transition: 'color 0.3s ease'
+                }}>
+                  {category.label}
+                </span>
+                <span style={{
+                  fontSize: '10px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontFamily: '"Helvetica Neue", Arial, sans-serif'
+                }}>
                   {models.length}
                 </span>
               </button>
 
               {/* Models List */}
               {isExpanded && hasModels && (
-                <div className="bg-[#1e1e1e]">
+                <div style={{
+                  background: 'rgba(16, 16, 16, 0.8)',
+                  backdropFilter: 'blur(8px)'
+                }}>
                   {models.map((model, index) => {
                     const isSelected = selectedModel?.fileName === model.fileName;
                     
@@ -135,16 +220,61 @@ const ModelSwitcher = ({ currentModel, onModelChange }) => {
                       <button
                         key={index}
                         onClick={() => handleModelSelect(model)}
-                        className={`w-full px-3 py-1.5 pl-10 text-left flex items-center gap-2 transition-colors ${
-                          isSelected 
-                            ? 'bg-[#094771] text-white' 
-                            : 'text-gray-400 hover:bg-[#2a2a2a] hover:text-gray-300'
-                        }`}
+                        style={{
+                          width: '100%',
+                          padding: '8px 16px 8px 40px',
+                          textAlign: 'left',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          transition: 'all 0.3s ease',
+                          background: isSelected 
+                            ? 'linear-gradient(to right, rgba(86, 128, 194, 0.3), rgba(86, 128, 194, 0.1))' 
+                            : 'transparent',
+                          color: isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.7)',
+                          border: 'none',
+                          cursor: 'pointer',
+                          borderLeft: isSelected ? '3px solid #5680c2' : '3px solid transparent',
+                          fontFamily: '"Helvetica Neue", Arial, sans-serif',
+                          backdropFilter: isSelected ? 'blur(8px)' : 'none'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!isSelected) {
+                            e.target.style.background = 'rgba(255, 255, 255, 0.05)'
+                            e.target.style.color = 'rgba(255, 255, 255, 0.9)'
+                            e.target.style.backdropFilter = 'blur(4px)'
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!isSelected) {
+                            e.target.style.background = 'transparent'
+                            e.target.style.color = 'rgba(255, 255, 255, 0.7)'
+                            e.target.style.backdropFilter = 'none'
+                          }
+                        }}
                       >
-                        <span className="text-[10px] opacity-50">—</span>
-                        <span className="flex-1 truncate text-[12px]">{model.name}</span>
+                        <span style={{
+                          fontSize: '10px',
+                          opacity: 0.5,
+                          color: 'rgba(255, 255, 255, 0.5)'
+                        }}>—</span>
+                        <span style={{
+                          flex: 1,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          fontSize: '12px',
+                          fontWeight: '300',
+                          letterSpacing: '0.01em'
+                        }}>{model.name}</span>
                         {isSelected && (
-                          <div className="w-1 h-1 rounded-full bg-blue-400" />
+                          <div style={{
+                            width: '4px',
+                            height: '4px',
+                            borderRadius: '50%',
+                            background: '#5680c2',
+                            boxShadow: '0 0 8px rgba(86, 128, 194, 0.5)'
+                          }} />
                         )}
                       </button>
                     );
@@ -154,7 +284,14 @@ const ModelSwitcher = ({ currentModel, onModelChange }) => {
 
               {/* Empty State */}
               {isExpanded && !hasModels && (
-                <div className="px-3 py-2 pl-10 text-[11px] text-gray-600 italic">
+                <div style={{
+                  padding: '12px 16px 12px 40px',
+                  fontSize: '11px',
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  fontStyle: 'italic',
+                  fontFamily: '"Helvetica Neue", Arial, sans-serif',
+                  background: 'rgba(16, 16, 16, 0.5)'
+                }}>
                   No models found
                 </div>
               )}
@@ -165,9 +302,34 @@ const ModelSwitcher = ({ currentModel, onModelChange }) => {
 
       {/* Footer - Selected Model Info */}
       {selectedModel && (
-        <div className="px-3 py-2 border-t border-[#333] bg-[#252526]">
-          <div className="text-[10px] text-gray-500 mb-0.5">SELECTED</div>
-          <div className="text-[11px] text-gray-300 truncate">{selectedModel.name}</div>
+        <div style={{
+          padding: '12px 16px',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+          background: 'linear-gradient(to bottom, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03))',
+          backdropFilter: 'blur(8px)',
+          borderBottomLeftRadius: '8px',
+          borderBottomRightRadius: '8px'
+        }}>
+          <div style={{
+            fontSize: '10px',
+            color: 'rgba(255, 255, 255, 0.6)',
+            marginBottom: '4px',
+            textTransform: 'uppercase',
+            letterSpacing: '0.1em',
+            fontFamily: '"Helvetica Neue", Arial, sans-serif'
+          }}>SELECTED</div>
+          <div style={{
+            fontSize: '11px',
+            color: isHovered ? '#ffffff' : 'rgba(255, 255, 255, 0.9)',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            fontWeight: '400',
+            letterSpacing: '0.01em',
+            textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+            transition: 'color 0.3s ease',
+            fontFamily: '"Helvetica Neue", Arial, sans-serif'
+          }}>{selectedModel.name}</div>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Menu, X, RotateCcw, Home } from 'lucide-react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, Center } from '@react-three/drei'
@@ -7,7 +7,7 @@ import Model from './components/Model'
 import ColorPicker from './components/ColorPicker'
 import StickerPicker from './components/StickerPicker'
 import EditModeUI from './components/EditModeUI'
-import StickerEditor from './components/StickerEditor'
+import Editor from './components/Editor'
 import ModelSwitcher from './components/ModelSwitcher'
 import { preprocessStickers, createStickerPreview, debugCoordinateMapping, verifyCoordinateSystem } from './utils/stickerMapping'
 import { ModelType } from './enums/AppEnums'
@@ -19,6 +19,9 @@ import Panel from './components/Panel'
 import IconButton from './components/IconButton'
 
 function App() {
+  // Mouse position for EditModeUI-style effects
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 })
+
   // Core application state
   const [appMode, setAppMode] = useState('VIEW') // 'VIEW', 'EDIT', 'MESH_EDIT'
   const [editSide, setEditSide] = useState(null) // 'FRONT', 'BACK'
@@ -29,6 +32,13 @@ const [originalModelColor, setOriginalModelColor] = useState('#ffffff');
     { url: '/sample-sticker.svg', name: 'Sample Sticker' },
     { url: '/test-sticker.svg', name: 'Test Sticker' }
   ])
+
+  // Mouse tracking for blur effects
+  useEffect(() => {
+    const handleMouseMove = (e) => setMousePos({ x: e.clientX, y: e.clientY })
+    window.addEventListener('mousemove', handleMouseMove)
+    return () => window.removeEventListener('mousemove', handleMouseMove)
+  }, [])
 
 
 
@@ -249,46 +259,56 @@ const handleModelChange = (modelType, modelPath) => {
       {/* Main 3D View Mode */}
       {appMode === 'VIEW' && (
         <>
-<div 
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        zIndex: 0,
-        // Base color is black for the corners
-        backgroundColor: '#000000', 
-        overflow: 'hidden', 
-      }}
-    >
-        {/* Inner DIV for the Blur and Gradient (Center Focus) */}
-        <div 
-          style={{
-            width: '100%',
-            height: '100%',
-            // Gradient: Lighter grey center (#555555) fading to transparent/black at 75%
-            // This creates the strong visual vignette to focus the center.
-            backgroundImage: 'radial-gradient(circle at center, rgba(190, 190, 190, 1) 0%, rgba(0, 0, 0, 0.8) 75%, rgba(0, 0, 0, 1) 100%)',
-            filter: 'blur(20px)', // High blur for soft, out-of-focus look
-            transform: 'scale(1.1)', // Prevents blur edges from showing
-          }}
-        />
+{/* Sharp Background Image */}
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{
+          backgroundImage: `url('/back.jpg')`,
+          transform: 'scale(1.1)',
+        }}
+      ></div>
 
-        {/* Grain Overlay for subtle texture */}
-        <div 
-            className="grain-overlay" // Requires the CSS class below
-            style={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                width: '100%',
-                height: '100%',
-                opacity: 0.05, // Subtle grain
-                pointerEvents: 'none',
-            }}
-        />
-    </div>
+      {/* Heavily Blurred Overlay with Mouse Interaction */}
+      <div
+        className="absolute inset-0 bg-cover bg-center pointer-events-none"
+        style={{
+          backgroundImage: `url('/back.jpg')`,
+          filter: 'blur(8px) brightness(0.6)',
+          transform: 'scale(1.1)',
+          maskImage: `radial-gradient(circle 300px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, black 40%)`,
+          WebkitMaskImage: `radial-gradient(circle 300px at ${mousePos.x}px ${mousePos.y}px, transparent 0%, black 40%)`,
+          transition: 'mask-image 0.15s ease-out, -webkit-mask-image 0.15s ease-out',
+        }}
+      ></div>
+
+      {/* Subtle vignette for edges */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.7) 100%)',
+        }}
+      />
+
+      {/* Grid overlay */}
+      <div
+        className="absolute inset-0 opacity-10"
+        style={{
+          backgroundImage: `
+            linear-gradient(rgba(0,255,100,0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,255,100,0.1) 1px, transparent 1px)
+          `,
+          backgroundSize: '60px 60px',
+        }}
+      />
+
+      {/* Subtle cursor glow */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `radial-gradient(circle 200px at ${mousePos.x}px ${mousePos.y}px, rgba(0,255,100,0.08), transparent 60%)`,
+          transition: 'all 0.15s ease-out',
+        }}
+      />
 
        
           <Canvas
@@ -484,12 +504,32 @@ const handleModelChange = (modelType, modelPath) => {
               }}>
                 <button 
                   onClick={handleEditMode}
-                  className="btn primary"
                   style={{
                     padding: '16px 32px',
                     fontSize: '16px',
                     borderRadius: '24px',
-                    boxShadow: 'var(--glow)'
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    backdropFilter: 'blur(12px)',
+                    WebkitBackdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#ffffff',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    fontFamily: '"Helvetica Neue", Arial, sans-serif',
+                    fontWeight: '300',
+                    letterSpacing: '0.02em',
+                    textShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(255, 255, 255, 0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.15)'
+                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.4)'
+                    e.target.style.transform = 'translateY(-2px)'
+                  }}
+                  onMouseLeave={(e) => {
+                    e.target.style.background = 'rgba(255, 255, 255, 0.1)'
+                    e.target.style.border = '1px solid rgba(255, 255, 255, 0.2)'
+                    e.target.style.transform = 'translateY(0px)'
                   }}
                 >
                   ✨ Edit Design
@@ -553,7 +593,7 @@ const handleModelChange = (modelType, modelPath) => {
 
       {/* Edit Mode - 2D Sticker Editor */}
       {appMode === 'EDIT' && editSide && (
-        <StickerEditor
+        <Editor
           side={editSide}
           stickers={editorStickers}
           stickerLibrary={stickerLibrary}

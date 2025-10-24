@@ -164,7 +164,7 @@ canvas {
     font-size: clamp(14px, 3.5vw, 16px) !important;
   }
 
-  /* StickerEditor mobile styles */
+  /* Editor mobile styles */
   .sticker-editor-container {
     display: flex !important;
     flex-direction: column !important;

@@ -494,7 +494,7 @@ import { editorToTexture, TEXTURE_CONFIG, MODEL_CONFIG } from './TShirtConfig'
 const textureCoords = editorToTexture(sticker, 'front')
 // Use textureCoords.x, textureCoords.y for rendering
 
-// In StickerEditor.jsx:
+// In Editor.jsx:
 import { EDITOR_CONFIG, getEditorDimensions, validateStickerBounds } from './TShirtConfig'
 
 const dimensions = getEditorDimensions('front')
