@@ -1,144 +1,9 @@
 import React, { useState } from 'react'
-import { Upload, Image, X } from 'lucide-react'
+import { Upload, Image } from 'lucide-react'
 
 const StickerPicker = ({ onStickerSelect, stickers, onStickerUpload }) => {
   const [draggedFile, setDraggedFile] = useState(null)
-  const [isExpanded, setIsExpanded] = useState(true)
-
-  const containerStyle = {
-    position: 'fixed',
-    top: '0',
-    right: '0',
-    height: '100vh',
-    width: isExpanded ? 'min(320px, 100vw)' : '60px',
-    background: 'linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%)',
-    borderLeft: '1px solid rgba(255, 255, 255, 0.05)',
-    boxShadow: '-4px 0 24px rgba(0, 0, 0, 0.4)',
-    transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    zIndex: 1000,
-    display: 'flex',
-    flexDirection: 'column',
-    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-  }
-
-  const headerStyle = {
-    padding: '20px',
-    borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: '60px',
-  }
-
-  const titleStyle = {
-    margin: 0,
-    fontSize: '13px',
-    fontWeight: 600,
-    color: '#e0e0e0',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    display: isExpanded ? 'block' : 'none',
-  }
-
-  const toggleButtonStyle = {
-    background: 'transparent',
-    border: 'none',
-    color: '#888',
-    cursor: 'pointer',
-    padding: '8px',
-    borderRadius: '4px',
-    transition: 'all 0.2s ease',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  }
-
-  const contentStyle = {
-    padding: isExpanded ? '20px' : '10px',
-    flex: 1,
-    overflowY: 'auto',
-    overflowX: 'hidden',
-  }
-
-  const uploadAreaStyle = {
-    border: '2px dashed rgba(255, 255, 255, 0.15)',
-    borderRadius: '8px',
-    padding: isExpanded ? '32px 20px' : '20px 10px',
-    textAlign: 'center',
-    marginBottom: '20px',
-    backgroundColor: draggedFile ? 'rgba(66, 133, 244, 0.1)' : 'rgba(255, 255, 255, 0.03)',
-    cursor: 'pointer',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-    display: isExpanded ? 'block' : 'none',
-  }
-
-  const uploadIconStyle = {
-    marginBottom: '12px',
-    color: draggedFile ? '#4285f4' : '#666',
-    transition: 'color 0.3s ease',
-  }
-
-  const uploadTextStyle = {
-    fontSize: '12px',
-    color: '#999',
-    marginBottom: '4px',
-    fontWeight: 500,
-  }
-
-  const uploadSubtextStyle = {
-    fontSize: '11px',
-    color: '#666',
-  }
-
-  const stickerGridStyle = {
-    display: 'grid',
-    gridTemplateColumns: isExpanded ? 'repeat(auto-fill, minmax(70px, 1fr))' : '1fr',
-    gap: '12px',
-    maxHeight: isExpanded ? 'calc(100vh - 280px)' : 'calc(100vh - 100px)',
-    overflowY: 'auto',
-    paddingRight: '4px',
-  }
-
-  const stickerItemWrapperStyle = {
-    position: 'relative',
-    aspectRatio: '1',
-    borderRadius: '8px',
-    overflow: 'hidden',
-    cursor: 'pointer',
-    background: 'rgba(255, 255, 255, 0.03)',
-    border: '1px solid rgba(255, 255, 255, 0.06)',
-    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-  }
-
-  const stickerItemStyle = {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-  }
-
-  const emptyStateStyle = {
-    textAlign: 'center',
-    padding: '40px 20px',
-    color: '#666',
-    display: isExpanded ? 'block' : 'none',
-  }
-
-  const scrollbarStyle = `
-    ::-webkit-scrollbar {
-      width: 6px;
-    }
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 3px;
-    }
-    ::-webkit-scrollbar-thumb:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
-  `
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const handleFileUpload = (event) => {
     const file = event.target.files?.[0]
@@ -175,56 +40,66 @@ const StickerPicker = ({ onStickerSelect, stickers, onStickerUpload }) => {
   }
 
   return (
-    <>
-      <style>{scrollbarStyle}</style>
-      <div style={containerStyle}>
-        <div style={headerStyle}>
-          <h3 style={titleStyle}>Asset Browser</h3>
-          <button
-            style={toggleButtonStyle}
-            onClick={() => setIsExpanded(!isExpanded)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'
-              e.currentTarget.style.color = '#e0e0e0'
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent'
-              e.currentTarget.style.color = '#888'
-            }}
-            aria-label={isExpanded ? 'Collapse panel' : 'Expand panel'}
-          >
-            {isExpanded ? <X size={18} /> : <Image size={18} />}
-          </button>
+    <div className="w-full">
+      {/* Header - Always Visible */}
+      <div 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="bg-gradient-to-b from-[#3e3e3e] to-[#2d2d2d] border border-[#1a1a1a] rounded-t-md px-3 py-2 cursor-pointer flex items-center justify-between transition-all hover:from-[#494949] hover:to-[#373737] select-none"
+        style={{
+          borderBottomLeftRadius: isExpanded ? 0 : '0.375rem',
+          borderBottomRightRadius: isExpanded ? 0 : '0.375rem',
+          borderBottom: isExpanded ? '1px solid #2d2d2d' : '1px solid #1a1a1a'
+        }}
+      >
+        <div className="flex items-center gap-2 text-xs text-[#c5c5c5]">
+          <Image size={14} className="text-[#8c8c8c]" />
+          <span className="font-medium">Assets</span>
         </div>
+        
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-[#8c8c8c]">{stickers.length}</span>
+          {/* Triangle */}
+          <svg 
+            width="10" 
+            height="10" 
+            viewBox="0 0 8 8"
+            className="transition-transform duration-150"
+            style={{ 
+              transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)'
+            }}
+          >
+            <path d="M1 2 L4 6 L7 2" fill="none" stroke="#8c8c8c" strokeWidth="1.5"/>
+          </svg>
+        </div>
+      </div>
 
-        <div style={contentStyle}>
+      {/* Expanded Panel */}
+      {isExpanded && (
+        <div className="bg-[#3a3a3a] border border-t-0 border-[#1a1a1a] rounded-b-md p-3 shadow-lg max-h-[400px] overflow-y-auto overflow-x-hidden">
           {/* Upload Area */}
           <div
-            style={uploadAreaStyle}
+            className={`border-2 border-dashed rounded p-4 text-center mb-3 cursor-pointer transition-all ${
+              draggedFile
+                ? 'border-[#5680c2] bg-[#5680c2]/10'
+                : 'border-[#525252] bg-[#2a2a2a] hover:bg-[#333333] hover:border-[#666666]'
+            }`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={() => document.getElementById('sticker-upload').click()}
-            onMouseEnter={(e) => {
-              if (!draggedFile) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)'
-              }
-            }}
-            onMouseLeave={(e) => {
-              if (!draggedFile) {
-                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)'
-                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.15)'
-              }
-            }}
           >
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <Upload style={uploadIconStyle} size={24} />
+            <div className="flex justify-center mb-2">
+              <Upload 
+                className={`transition-colors ${
+                  draggedFile ? 'text-[#5680c2]' : 'text-[#8c8c8c]'
+                }`} 
+                size={20} 
+              />
             </div>
-            <div style={uploadTextStyle}>
+            <div className="text-xs text-[#c5c5c5] mb-0.5 font-medium">
               Import Asset
             </div>
-            <div style={uploadSubtextStyle}>
+            <div className="text-[10px] text-[#8c8c8c]">
               Drop or click to browse
             </div>
             <input
@@ -232,55 +107,190 @@ const StickerPicker = ({ onStickerSelect, stickers, onStickerUpload }) => {
               type="file"
               accept="image/*"
               onChange={handleFileUpload}
-              style={{ display: 'none' }}
+              className="hidden"
             />
           </div>
 
           {/* Sticker Grid */}
           {stickers.length > 0 ? (
-            <div style={stickerGridStyle}>
-              {stickers.map((sticker, index) => (
-                <div
-                  key={index}
-                  style={stickerItemWrapperStyle}
-                  onClick={() => onStickerSelect(sticker)}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.05)'
-                    e.currentTarget.style.borderColor = '#4285f4'
-                    e.currentTarget.style.boxShadow = '0 4px 16px rgba(66, 133, 244, 0.3)'
-                    const img = e.currentTarget.querySelector('img')
-                    if (img) img.style.transform = 'scale(1.1)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)'
-                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)'
-                    e.currentTarget.style.boxShadow = 'none'
-                    const img = e.currentTarget.querySelector('img')
-                    if (img) img.style.transform = 'scale(1)'
-                  }}
-                  title={sticker.name}
-                >
-                  <img
-                    src={sticker.url}
-                    alt={sticker.name}
-                    style={stickerItemStyle}
-                  />
-                </div>
-              ))}
-            </div>
+            <>
+              <div className="text-[9px] text-[#8c8c8c] uppercase tracking-wider mb-2 font-medium">
+                Library ({stickers.length})
+              </div>
+              <div className="grid grid-cols-4 gap-1.5">
+                {stickers.map((sticker, index) => (
+                  <button
+                    key={index}
+                    className="relative aspect-square rounded overflow-hidden cursor-pointer bg-[#2a2a2a] border border-[#1a1a1a] transition-all hover:border-[#5680c2] hover:border-2 hover:scale-105 outline-none"
+                    onClick={() => onStickerSelect(sticker)}
+                    title={sticker.name}
+                  >
+                    <img
+                      src={sticker.url}
+                      alt={sticker.name}
+                      className="w-full h-full object-cover"
+                    />
+                  </button>
+                ))}
+              </div>
+            </>
           ) : (
-            <div style={emptyStateStyle}>
-              <Image size={48} style={{ color: '#444', marginBottom: '12px' }} />
-              <div style={{ fontSize: '12px', marginBottom: '4px' }}>No assets yet</div>
-              <div style={{ fontSize: '11px', color: '#555' }}>
+            <div className="text-center py-6 text-[#666666]">
+              <Image size={32} className="text-[#555555] mb-2 mx-auto" />
+              <div className="text-xs mb-0.5">No assets yet</div>
+              <div className="text-[10px] text-[#555555]">
                 Import images to get started
               </div>
             </div>
           )}
         </div>
-      </div>
-    </>
+      )}
+
+      <style>{`
+        /* Custom scrollbar */
+        div::-webkit-scrollbar {
+          width: 8px;
+        }
+        div::-webkit-scrollbar-track {
+          background: #2a2a2a;
+          border-left: 1px solid #1a1a1a;
+        }
+        div::-webkit-scrollbar-thumb {
+          background: #5a5a5a;
+          border-radius: 4px;
+          border: 1px solid #4a4a4a;
+        }
+        div::-webkit-scrollbar-thumb:hover {
+          background: #6a6a6a;
+        }
+        * {
+          scrollbar-width: thin;
+          scrollbar-color: #5a5a5a #2a2a2a;
+        }
+        @media (hover: none) and (pointer: coarse) {
+          button:active {
+            transform: scale(0.95);
+          }
+        }
+      `}</style>
+    </div>
   )
 }
 
-export default StickerPicker
+// Demo ColorPicker
+const ColorPicker = ({ color, onChange, originalColor = null }) => {
+  const [isExpanded, setIsExpanded] = useState(false)
+
+  const presetColors = [
+    '#ffffff', '#ececec', '#d5d5d5', '#b0b0b0', '#8c8c8c',
+    '#6e6e6e', '#525252', '#383838', '#262626', '#000000',
+    '#ff0000', '#ff7700', '#ffdd00', '#00ff00', '#00ffff',
+    '#0000ff', '#dd00ff', '#ff0088', '#990000', '#aa5500'
+  ]
+
+  return (
+    <div className="w-full">
+      <div 
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="bg-gradient-to-b from-[#3e3e3e] to-[#2d2d2d] border border-[#1a1a1a] rounded-t-md px-3 py-2 cursor-pointer flex items-center justify-between transition-all hover:from-[#494949] hover:to-[#373737] select-none"
+        style={{
+          borderBottomLeftRadius: isExpanded ? 0 : '0.375rem',
+          borderBottomRightRadius: isExpanded ? 0 : '0.375rem',
+          borderBottom: isExpanded ? '1px solid #2d2d2d' : '1px solid #1a1a1a'
+        }}
+      >
+        <div className="flex items-center gap-2 text-xs text-[#c5c5c5]">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="7" stroke="#8c8c8c" strokeWidth="1.5"/>
+            <path d="M8 2 L8 14 M2 8 L14 8" stroke="#8c8c8c" strokeWidth="1.5"/>
+          </svg>
+          <span className="font-medium">Color</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div 
+            className="w-6 h-4 rounded border border-black shadow-inner"
+            style={{ backgroundColor: color }}
+          />
+          <svg 
+            width="10" 
+            height="10" 
+            viewBox="0 0 8 8"
+            className="transition-transform duration-150"
+            style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)' }}
+          >
+            <path d="M1 2 L4 6 L7 2" fill="none" stroke="#8c8c8c" strokeWidth="1.5"/>
+          </svg>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="bg-[#3a3a3a] border border-t-0 border-[#1a1a1a] rounded-b-md p-3 shadow-lg">
+          <div className="grid grid-cols-5 gap-1.5">
+            {presetColors.map((preset, index) => (
+              <button
+                key={index}
+                onClick={() => onChange(preset)}
+                className={`aspect-square rounded transition-all outline-none ${
+                  color === preset ? 'border-2 border-[#5680c2]' : 'border border-[#1a1a1a] hover:border-[#5680c2]'
+                }`}
+                style={{ backgroundColor: preset }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// Demo Panel
+const Panel = ({ title, children }) => {
+  return (
+    <div className="bg-[#1a1a1a] rounded-xl overflow-hidden border border-white/10 mb-3 w-full max-w-2xl mx-auto">
+      <div className="p-3 sm:p-4 border-b border-white/10">
+        <span className="font-semibold text-sm text-white">{title}</span>
+      </div>
+      <div className="p-3 sm:p-4 space-y-3">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+// Demo App
+export default function App() {
+  const [color, setColor] = useState('#ff0000')
+  const [stickers, setStickers] = useState([
+    { url: 'https://picsum.photos/seed/1/200', name: 'Image 1' },
+    { url: 'https://picsum.photos/seed/2/200', name: 'Image 2' },
+    { url: 'https://picsum.photos/seed/3/200', name: 'Image 3' },
+    { url: 'https://picsum.photos/seed/4/200', name: 'Image 4' },
+  ])
+
+  const handleStickerSelect = (sticker) => {
+    alert(`Selected: ${sticker.name}`)
+  }
+
+  const handleStickerUpload = (dataUrl, name) => {
+    setStickers([...stickers, { url: dataUrl, name }])
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4">
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-2xl font-bold text-white mb-6 text-center">
+          Compact Pickers
+        </h1>
+        
+        <Panel title="Design Customization">
+          <ColorPicker color={color} onChange={setColor} />
+          <StickerPicker
+            stickers={stickers}
+            onStickerSelect={handleStickerSelect}
+            onStickerUpload={handleStickerUpload}
+          />
+        </Panel>
+      </div>
+    </div>
+  )
+}

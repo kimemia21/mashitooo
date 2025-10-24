@@ -401,66 +401,49 @@ const handleModelChange = (modelType, modelPath) => {
           )}
 
           {/* Left Panel - Model Switcher & Color Picker */}
-          <div style={{
-            position: isMobile ? 'fixed' : 'absolute',
-            top: 0,
-            left: 0,
-            width: isMobile ? '90vw' : 'auto',
-            maxWidth: isMobile ? '320px' : 'none',
-            height: isMobile ? '100vh' : 'auto',
-            zIndex: 1000,
-            transform: isMobile ? (leftPanelOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
-            transition: 'transform 0.3s ease',
-            pointerEvents: 'auto',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px'
-          }}>
-            <Panel 
-              title="Model Type" 
-              collapsible={!isMobile} 
-              defaultOpen={!isMobile}
-            >
-              <ModelSwitcher 
-                currentModel={currentModelType}
-                onModelChange={handleModelChange}
-              />
-            </Panel>
+  
 
-            <Panel 
-              title="Colors" 
-              collapsible={!isMobile} 
-              defaultOpen={!isMobile}
-            >
-              <ColorPicker 
-                color={tshirtColor} 
-                onChange={setTshirtColor} 
-              />
-            </Panel>
-          </div>
-          
-          {/* Right Panel - Sticker Picker (Desktop Only) */}
-          {!isMobile && (
-            <div style={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              zIndex: 100,
-              pointerEvents: 'auto'
-            }}>
-              <Panel 
-                title="Stickers" 
-                collapsible={true} 
-                defaultOpen={false}
-              >
-                <StickerPicker 
-                  onStickerSelect={handleAddSticker}
-                  stickers={stickerLibrary}
-                  onStickerUpload={handleStickerUpload}
-                />
-              </Panel>
-            </div>
-          )}
+          {/* Left Panel - Model Switcher & Color Picker */}
+<div style={{
+  position: isMobile ? 'fixed' : 'absolute',
+  top: 0,
+  left: 0,
+  width: isMobile ? '90vw' : 'auto',
+  maxWidth: isMobile ? '320px' : 'none',
+  height: isMobile ? '100vh' : 'auto',
+  zIndex: 1000,
+  transform: isMobile ? (leftPanelOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none',
+  transition: 'transform 0.3s ease',
+  pointerEvents: 'auto',
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '12px',
+  padding: '12px'
+}}>
+  {/* Model Type Panel */}
+  <Panel 
+    title="Model Type" 
+    type="modelPicker"
+    collapsible={!isMobile} 
+    defaultOpen={!isMobile}
+    currentModel={currentModelType}
+    onModelChange={handleModelChange}
+  />
+
+  {/* Design Customization Panel */}
+  <Panel 
+    title="Design Customization"
+    type="full"
+    collapsible={!isMobile} 
+    defaultOpen={!isMobile}
+    color={tshirtColor}
+    onColorChange={setTshirtColor}
+    originalColor={originalModelColor}
+    stickers={stickerLibrary}
+    onStickerSelect={handleAddSticker}
+    onStickerUpload={handleStickerUpload}
+  />
+</div>
 
           {/* Floating Action Buttons - Mobile */}
           {isMobile && (

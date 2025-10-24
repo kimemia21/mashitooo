@@ -18,6 +18,7 @@ function Model({
   const group = useRef()
   const meshRef = useRef()
   const { camera, gl } = useThree()
+  const VIEW_FIT_SIZE = 3;
   
   const cameraState = useRef({
     radius: 4,
@@ -43,20 +44,32 @@ function Model({
   const [isLoading, setIsLoading] = useState(true)
   const [texturesLoaded, setTexturesLoaded] = useState(false)
   const [modelLoaded, setModelLoaded] = useState(false)
+  const [autoScale, setAutoScale] = useState(1);
+  const [centerOffset, setCenterOffset] = useState([0, 0, 0]);
   const [originalMap, setOriginalMap] = useState(null)
+  const [originalModelColor, setOriginalModelColor] = useState('#ffffff')
   
 
 // Load model with proper error handling
-let gltf, error
-try {
-  gltf = useGLTF(path, true)
-} catch (e) {
-  error = e
-  console.error('Model loading error:', e)
-}
-
-const nodes = gltf?.nodes
-const materials = gltf?.materials
+let  error
+const { nodes, materials } = useGLTF(
+    path, 
+    // 1. Success Callback (CRITICAL: Triggers your scaling useEffect)
+    () => {
+        console.log('GLTF Model fully loaded. Triggering scaling.');
+        setModelLoaded(true);
+        setIsLoading(false);
+    },
+    // 2. Progress Callback (We can leave this undefined)
+    undefined, 
+    // 3. Error Setup (For deep error handling)
+    (loader) => {
+      loader.manager.onError = (url) => {
+          console.error(`Error loading model: ${url}`);
+          setIsLoading(false); 
+      };
+    }
+  );
   // Set textures as loaded immediately since we're not loading any
 // Reset loading states when path changes
 useEffect(() => {
@@ -66,6 +79,10 @@ useEffect(() => {
   
   // Clear texture cache to prevent using old model's textures
   textureCache.current.clear()
+  
+  // Reset original data for new model
+  setOriginalMap(null)
+  setOriginalModelColor('#ffffff')
   
   // Small delay to ensure proper loading
   const timer = setTimeout(() => {
@@ -82,54 +99,45 @@ useEffect(() => {
 useEffect(() => {
   setTexturesLoaded(true)
 }, [])
-useEffect(() => {
-    // Check if the model is loaded and an original color reporting function exists
-    if (modelLoaded && nodes && onOriginalColorLoad) {
-        
-        // Find the primary mesh (e.g., the hoodie mesh)
-        const primaryMesh = Object.values(nodes).find(
-            node => node.isMesh && node.name.toLowerCase().includes('hoodie')
-        );
-
-        if (primaryMesh && primaryMesh.material) {
-            let originalColor = '#ffffff'; // Fallback
-            
-            // Attempt to get the color from the material's color property
-            if (primaryMesh.material.color) {
-                originalColor = `#${primaryMesh.material.color.getHexString()}`;
-            }
-
-            // ✅ Call the prop function to report the color back to App.js
-            onOriginalColorLoad(originalColor);
-        }
-    }
-
-}, [modelLoaded, nodes, onOriginalColorLoad]);
-
-
-// Model.jsx (Add a new useEffect)
-
-// Note: You must add onOriginalColorLoad to the destructured props
-// (e.g., function Model({ color = '#ffffff', stickers = [], ..., onOriginalColorLoad = null, ... })
+// Extract original color and texture from model
 
 useEffect(() => {
     if (modelLoaded && nodes) {
+        // Find the primary mesh - try different naming patterns
         const primaryMesh = Object.values(nodes).find(
-            node => node.isMesh && node.name.toLowerCase().includes('hoodie')
-        );
+            node => node.isMesh && (
+                node.name.toLowerCase().includes('hoodie') ||
+                node.name.toLowerCase().includes('shirt') ||
+                node.name.toLowerCase().includes('tshirt') ||
+                node.name.toLowerCase().includes('t-shirt') ||
+                node.name.toLowerCase().includes('beanie') ||
+                node.name.toLowerCase().includes('cap') ||
+                node.name.toLowerCase().includes('mesh') ||
+                node.name.toLowerCase().includes('body') ||
+                node.name.toLowerCase().includes('main')
+            )
+        ) || Object.values(nodes).find(node => node.isMesh); // Fallback to first mesh
 
         if (primaryMesh && primaryMesh.material) {
+            console.log('🎯 Found primary mesh:', primaryMesh.name, 'with material:', primaryMesh.material);
+            
             // 1. Extract Color
-            if (primaryMesh.material.color && onOriginalColorLoad) {
+            if (primaryMesh.material.color) {
                 const originalColor = `#${primaryMesh.material.color.getHexString()}`;
-                onOriginalColorLoad(originalColor);
+                console.log('🎨 Original model color extracted:', originalColor);
+                setOriginalModelColor(originalColor); // Store locally
+                if (onOriginalColorLoad) {
+                    onOriginalColorLoad(originalColor); // Report to parent
+                }
             }
             
             // 2. Extract Texture Map (e.g., the fabric weave)
             if (primaryMesh.material.map) {
-                // The map is a THREE.Texture object. We store it to use in the canvas.
+                console.log('🖼️ Original texture map found:', primaryMesh.material.map);
                 setOriginalMap(primaryMesh.material.map); 
             }
+        } else {
+            console.log('⚠️ No suitable mesh found in model nodes:', Object.keys(nodes));
         }
     }
 }, [modelLoaded, nodes, onOriginalColorLoad]);
@@ -152,8 +160,60 @@ useEffect(() => {
     })
   }, [])
 
+  // File: Model.jsx (INSERT THIS BLOCK, e.g., before useMemo or other effects)
+  // =========================================================================
+  // Dynamic Scaling and Centering Logic
+  // =========================================================================
+  useEffect(() => {
+    // This effect runs once the model has been loaded and rendered in the scene
+    if (modelLoaded && group.current) {
+      console.log("Model loaded. Calculating dynamic scale and center.");
+
+      // Temporarily set scale to 1 to get the true, unscaled bounding box
+      group.current.scale.set(1, 1, 1);
+      
+      const box = new THREE.Box3().setFromObject(group.current);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      
+      // Determine the model's largest dimension (X, Y, or Z)
+      const maxDimension = Math.max(size.x, size.y, size.z);
+      
+      // Calculate the scale factor to fit the largest dimension to VIEW_FIT_SIZE
+      const scaleFactor = VIEW_FIT_SIZE / maxDimension;
+      
+      // Calculate Centering and Grounding Offset
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      const min = box.min;
+      
+      // Offset to center on X and Z axes after scaling
+      const xOffset = -center.x * scaleFactor;
+      const zOffset = -center.z * scaleFactor;
+      // Offset to move the lowest point (min.y) to Y=0 (the ground) after scaling
+      const yOffset = -min.y * scaleFactor; 
+
+      // Update state
+      setAutoScale(scaleFactor);
+      setCenterOffset([xOffset, yOffset, zOffset]);
+
+      // Update Camera Radius for optimal viewing distance
+      const newRadius = Math.max(4, VIEW_FIT_SIZE * 1.5); 
+      
+      // Update camera state references for controls
+      cameraState.current.targetRadius = newRadius;
+      cameraState.current.radius = newRadius;
+    }
+  }, [modelLoaded, path, VIEW_FIT_SIZE, cameraState]); // Dependency on path ensures recalculation when model changes
+
+
   // Create texture with stickers baked in
   const fabricTexture = useMemo(() => {
+    // Skip creating custom texture for original color when no stickers
+    if ((color === 'original' || color === originalModelColor) && stickers.length === 0) {
+      return null // Will use originalMap in compositeMaterial
+    }
+
     const cacheKey = `fabric_${color}_${JSON.stringify(stickers.map(s => ({ id: s.id, x: s.x, y: s.y, side: s.side })))}`
     
     if (textureCache.current.has(cacheKey)) {
@@ -169,7 +229,9 @@ useEffect(() => {
     canvas.width = 2048
     canvas.height = 2560
     const ctx = canvas.getContext('2d', { alpha: false })
-    if (originalMap && originalMap.image) {
+    
+    // Handle original texture with color tinting
+    if (originalMap && originalMap.image && color !== 'original' && color !== originalModelColor) {
         // 1. Draw the original texture (fabric weave/details) onto the canvas first.
         ctx.drawImage(originalMap.image, 0, 0, canvas.width, canvas.height);
         
@@ -182,27 +244,33 @@ useEffect(() => {
         // 3. Reset blend mode so stickers are drawn normally (not tinted).
         ctx.globalCompositeOperation = 'source-over'; 
     
+    } else if (originalMap && originalMap.image && (color === 'original' || color === originalModelColor)) {
+        // For original color, just use the original texture as base
+        ctx.drawImage(originalMap.image, 0, 0, canvas.width, canvas.height);
+    
     } else {
-       ctx.fillStyle = color
-    ctx.fillRect(0, 0, canvas.width, canvas.height)
+       // Create synthetic fabric texture when no original texture available
+       ctx.fillStyle = color === 'original' ? originalModelColor : color
+       ctx.fillRect(0, 0, canvas.width, canvas.height)
     
-    // Add fabric texture
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.015)'
-    for (let i = 0; i < canvas.width; i += 2) {
-      for (let j = 0; j < canvas.height; j += 2) {
-        if (Math.random() > 0.97) {
-          ctx.fillRect(i, j, 1, 1)
-        }
-      }
+       // Add fabric texture
+       ctx.fillStyle = 'rgba(0, 0, 0, 0.015)'
+       for (let i = 0; i < canvas.width; i += 2) {
+         for (let j = 0; j < canvas.height; j += 2) {
+           if (Math.random() > 0.97) {
+             ctx.fillRect(i, j, 1, 1)
+           }
+         }
+       }
+       
+       ctx.fillStyle = 'rgba(0, 0, 0, 0.008)'
+       for (let i = 0; i < canvas.width; i += 4) {
+         ctx.fillRect(i, 0, 1, canvas.height)
+       }
+       for (let j = 0; j < canvas.height; j += 4) {
+         ctx.fillRect(0, j, canvas.width, 1)
+       }
     }
-    
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.008)'
-    for (let i = 0; i < canvas.width; i += 4) {
-      ctx.fillRect(i, 0, 1, canvas.height)
-    }
-    for (let j = 0; j < canvas.height; j += 4) {
-      ctx.fillRect(0, j, canvas.width, 1)
-    }}
     
 
   
@@ -261,6 +329,8 @@ useEffect(() => {
       }
     })
 
+   
+
     const texture = new THREE.CanvasTexture(canvas)
     texture.wrapS = THREE.ClampToEdgeWrapping
     texture.wrapT = THREE.ClampToEdgeWrapping
@@ -273,14 +343,25 @@ useEffect(() => {
     
     console.log('✅ Fabric texture created with stickers')
     return texture
-  }, [color, stickers, gl])
+  }, [color, stickers, gl, originalMap, originalModelColor])
 
   const compositeMaterial = useMemo(() => {
+    // Check if this is the original color and we have original textures
+    const isOriginalColor = color === originalModelColor || color === 'original'
+    
+    // Determine which texture to use
+    let textureToUse = fabricTexture
+    if (isOriginalColor && originalMap) {
+      textureToUse = originalMap
+    } else if (!fabricTexture && originalMap) {
+      textureToUse = originalMap
+    }
+    
     const material = new THREE.MeshStandardMaterial({
       color: '#ffffff', // Use white as base to not affect texture colors
       roughness: 0.7,
       metalness: 0.02,
-      map: fabricTexture,
+      map: textureToUse,
       toneMapped: true,
       normalScale: new THREE.Vector2(0.3, 0.3),
       envMapIntensity: 0.5
@@ -296,7 +377,7 @@ useEffect(() => {
     }
 
     return material
-  }, [color, viewMode, fabricTexture])
+  }, [color, viewMode, fabricTexture, originalMap, originalModelColor])
 
   const updateCamera = useCallback(() => {
     const state = cameraState.current
@@ -485,6 +566,53 @@ useEffect(() => {
     updateCamera()
   })
 
+// Auto-scale model to standard size based on bounding box
+  useEffect(() => {
+    if (modelLoaded && nodes && group.current) {
+      try {
+        // Calculate bounding box for entire model
+        const box = new THREE.Box3()
+        
+        Object.values(nodes).forEach(node => {
+          if (node.isMesh && node.geometry) {
+            // Compute bounding box if not already computed
+            if (!node.geometry.boundingBox) {
+              node.geometry.computeBoundingBox()
+            }
+            
+            // Get node's bounding box in world space
+            const nodeBox = node.geometry.boundingBox.clone()
+            box.union(nodeBox)
+          }
+        })
+        
+        // Target size - adjust this value to make models bigger/smaller
+        // 2.5 = medium size, 3.0 = larger, 2.0 = smaller
+        const targetSize = 2.5
+        
+        // Get the maximum dimension (width, height, or depth)
+        const size = box.getSize(new THREE.Vector3())
+        const maxDim = Math.max(size.x, size.y, size.z)
+        
+        // Calculate scale to normalize to target size
+        const normalizedScale = targetSize / maxDim
+        
+        // Apply scale to group
+        group.current.scale.setScalar(normalizedScale)
+        
+        console.log('📏 Model auto-scaled:', {
+          originalSize: maxDim.toFixed(2),
+          targetSize,
+          scale: normalizedScale.toFixed(2)
+        })
+      } catch (error) {
+        console.error('Error calculating model scale:', error)
+        // Fallback to default scale
+        group.current.scale.setScalar(1.2)
+      }
+    }
+  }, [modelLoaded, nodes])
+
   useEffect(() => {
     if (modelLoaded && texturesLoaded && isLoading) {
       setIsLoading(false)
@@ -538,41 +666,31 @@ useEffect(() => {
 
   return (
     <>
-    {/* <color attach="background" args={[blurredBackgroundColor]} /> */}
+    {/* <color attach="background" 
+    
+    
+    args={[blurredBackgroundColor]} /> */}
       
-      <ambientLight intensity={0.6} color="#ffffff" />
+ <ambientLight intensity={0.5} color="#ffffff" /> 
+
+{/* Directional Light for Sun-like Shadows */}
+<directionalLight
+  position={[5, 10, 5]} // Position: Top-front-right
+  intensity={0.4} // Reduced intensity
+  color="#ffffff"
+  castShadow
+  shadow-mapSize-width={2048}
+  shadow-mapSize-height={2048}
+  shadow-camera-far={50}
+  shadow-camera-left={-10}
+  shadow-camera-right={10}
+  shadow-camera-top={10}
+  shadow-camera-bottom={-10}
+/>
+
       
-      <directionalLight
-        position={[5, 10, 5]}
-        intensity={1.2}
-        color="#ffffff"
-        castShadow
-        shadow-mapSize-width={2048}
-        shadow-mapSize-height={2048}
-        shadow-camera-far={50}
-        shadow-camera-left={-10}
-        shadow-camera-right={10}
-        shadow-camera-top={10}
-        shadow-camera-bottom={-10}
-      />
-      
-      <directionalLight position={[-5, 5, -5]} intensity={0.6} color="#ffffff" />
-      
-      <pointLight position={[0, 5, 5]} intensity={0.8} color="#ffffff" />
-      <pointLight position={[-5, 3, -5]} intensity={0.6} color="#ffffff" />
-      <pointLight position={[5, 3, -5]} intensity={0.6} color="#ffffff" />
-      
-      <spotLight
-        position={[0, 8, -6]}
-        intensity={0.8}
-        angle={0.6}
-        penumbra={1}
-        color="#ffffff"
-        castShadow
-      />
-      
-      <group ref={group} dispose={null} scale={1.2}>
-        {Object.entries(nodes).map(([name, node]) => 
+<group ref={group} dispose={null} scale={autoScale} position={centerOffset}>
+  {Object.entries(nodes).map(([name, node]) =>
           node.isMesh && node.geometry ? (
             <mesh
               key={name}
